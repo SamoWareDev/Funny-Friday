@@ -15,7 +15,7 @@ namespace FunnyFriday
 
         public abstract void Update(ref Clock deltaTime);
 
-        public abstract void InputHandling(StateMachine stack);
+        public abstract void InputHandling(StateMachine stack, ref Clock deltaTime);
 
         public void Dispose()
         {
@@ -30,7 +30,6 @@ namespace FunnyFriday
         public Text regularText;
         public Text secondText;
         bool bFinished = false;
-        int gameTick = 0;
 
 
         public Intro(RenderWindow _wnd)
@@ -102,7 +101,7 @@ namespace FunnyFriday
             wnd.Draw(secondText);
         }
 
-        public override void InputHandling(StateMachine stack)
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.Enter) || bFinished)
             {
@@ -213,7 +212,7 @@ namespace FunnyFriday
             }
         }
 
-        public override void InputHandling(StateMachine stack)
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.Enter) && bTransition == false)
             {
@@ -348,7 +347,7 @@ namespace FunnyFriday
             wnd.Draw(transition);
         }
 
-        public override void InputHandling(StateMachine stack)
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.Down) && selectedMenu < 1)
             {
@@ -387,45 +386,143 @@ namespace FunnyFriday
     {
         RenderWindow wnd;
         private List<Sprite> weekContainer = new List<Sprite>();
+        private Dictionary<string, Sprite> spriteContainer = new Dictionary<string, Sprite>();
+        private List<Texture> difficultyTextures; 
+
+        int difficultyChoice = 0;
         int weekChoice = 0;
+        bool bLeft = false;
+        bool bRight = false;
+
+        RectangleShape leftSide;
+        RectangleShape rightSide;
+        RectangleShape top;
+
 
         public WeekSelect(RenderWindow _wnd)
         {
             wnd = _wnd;
 
-           for(int i = 0; i < 7; i++)
+            for (int i = 0; i < 7; i++)
             {
                 weekContainer.Add(new Sprite(new Texture($"Assets/storymenu/week{i}.png")));
-                weekContainer[i].Position = new Vector2f(wnd.Size.X / 2 - weekContainer[i].GetLocalBounds().Width / 2 + (weekContainer[i].GetLocalBounds().Width * i) + 100 * i , 400);
+                weekContainer[i].Position = new Vector2f(wnd.Size.X / 2 - weekContainer[i].GetLocalBounds().Width / 2 + (weekContainer[i].GetLocalBounds().Width * i) + 100 * i, 400);
             }
 
+            var textureManager = new TextureManager("Assets/XML/campainAssets.xml");
+
+            difficultyTextures = textureManager.GetTextures(new string[] { "EASY0000", "NORMAL0000", "HARD0000", "arrow push right0000" });
+
+            
+
+
+            leftSide = new RectangleShape(new Vector2f(415, 300));
+            leftSide.FillColor = new Color(0, 0, 0, 255);
+            leftSide.Position = new Vector2f(0, 350);
+
+            rightSide = new RectangleShape(new Vector2f(400, 300));
+            rightSide.FillColor = new Color(0, 0, 0, 255);
+            rightSide.Position = new Vector2f(885, 350);
+
+            spriteContainer.Add("easy", new Sprite(difficultyTextures[0]));
+            spriteContainer["easy"].Scale = new Vector2f(0.8f, 0.8f);
+            spriteContainer["easy"].Position = new Vector2f(rightSide.Position.X + 100, 400);
+
+            spriteContainer.Add("normal", new Sprite(difficultyTextures[1]));
+            spriteContainer["normal"].Scale = new Vector2f(0.8f, 0.8f);
+            spriteContainer["normal"].Position = new Vector2f(rightSide.Position.X + 100, 500);
+
+            spriteContainer.Add("hard", new Sprite(difficultyTextures[2]));
+            spriteContainer["hard"].Scale = new Vector2f(0.8f, 0.8f);
+            spriteContainer["hard"].Position = new Vector2f(rightSide.Position.X + 100, 600);
+
+            spriteContainer.Add("arrow", new Sprite(difficultyTextures[3]));
+            spriteContainer["arrow"].Scale = new Vector2f(0.8f, 0.8f);
+            spriteContainer["arrow"].Position = new Vector2f(rightSide.Position.X + 50, 400);
+
+            top = new RectangleShape(new Vector2f(wnd.Size.X, 350));
+            top.FillColor = new Color(255, 69, 0, 255);
+            top.Position = new Vector2f(0, 20);
         }
 
         public override void Draw()
         {
             foreach (Sprite s in weekContainer)
                 wnd.Draw(s);
+
+            wnd.Draw(leftSide);
+            wnd.Draw(rightSide);
+            wnd.Draw(top);
+
+            foreach (var s in spriteContainer)
+                wnd.Draw(s.Value);
         }
 
         public override void Update(ref Clock deltaTime)
         {
-            if(weekContainer[weekChoice].Position != new Vector2f(wnd.Size.X / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2, 400))
+            if (bLeft && weekContainer[weekChoice].Position.X <= (wnd.Size.X / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2))
             {
-                if(deltaTime.ElapsedTime.AsSeconds() >= 0.02f)
-                {
-                    weekContainer[weekChoice].Position = new Vector2f(weekContainer[weekChoice].Position.X - 4, 400);
-                    deltaTime.Restart();
-                }
+                foreach (Sprite week in weekContainer)
+                    week.Position = new Vector2f(week.Position.X + 25, 400);
+            }
+
+            if (bRight && weekContainer[weekChoice].Position.X >= (wnd.Size.X / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2))
+            {
+                foreach (Sprite week in weekContainer)
+                    week.Position = new Vector2f(week.Position.X - 25, 400);
+            }
+
+            switch(difficultyChoice)
+            {
+                case 0:
+                    spriteContainer["arrow"].Position = new Vector2f(spriteContainer["arrow"].Position.X, spriteContainer["easy"].Position.Y);
+                        break;
+
+                case 1:
+                    spriteContainer["arrow"].Position = new Vector2f(spriteContainer["arrow"].Position.X, spriteContainer["normal"].Position.Y);
+                    break;
+                case 2:
+                    spriteContainer["arrow"].Position = new Vector2f(spriteContainer["arrow"].Position.X, spriteContainer["hard"].Position.Y);
+                    break;
             }
         }
 
-        public override void InputHandling(StateMachine stack)
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
-            if(Keyboard.IsKeyPressed(Keyboard.Key.Right) && weekChoice < weekContainer.Count - 1)
+            if (deltaTime.ElapsedTime.AsSeconds() >= 0.2f && Keyboard.IsKeyPressed(Keyboard.Key.Right) && weekChoice < weekContainer.Count - 1)
+            {
+                Sound sound1 = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
+                sound1.Play();
                 weekChoice++;
+                bRight = true; bLeft = false;
+                deltaTime.Restart();
+            }
 
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Left) && weekChoice > 0)
+
+            if (deltaTime.ElapsedTime.AsSeconds() >= 0.2f && Keyboard.IsKeyPressed(Keyboard.Key.Left) && weekChoice > 0)
+            {
+                Sound sound1 = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
+                sound1.Play();
                 weekChoice--;
+                bRight = false; bLeft = true;
+                deltaTime.Restart();
+            }
+
+            if (deltaTime.ElapsedTime.AsSeconds() >= 0.2f && Keyboard.IsKeyPressed(Keyboard.Key.Up) && difficultyChoice > 0)
+            {
+                Sound sound1 = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
+                sound1.Play();
+                difficultyChoice--;
+                deltaTime.Restart();
+            }
+
+            if (deltaTime.ElapsedTime.AsSeconds() >= 0.2f && Keyboard.IsKeyPressed(Keyboard.Key.Down) && difficultyChoice < 2)
+            {
+                Sound sound1 = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
+                sound1.Play();
+                difficultyChoice++;
+                deltaTime.Restart();
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TextureAtlas imagePath="campaign_menu_UI_assets.png">
+<TextureAtlas imagePath="Assets/campaign_menu_UI_assets.png">
 	<!-- Created with Adobe Animate version 21.0.2.37893 -->
 	<!-- http://www.adobe.com/products/animate.html -->
 	<SubTexture name="EASY0000" x="0" y="0" width="196" height="65"/>

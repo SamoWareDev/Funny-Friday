@@ -29,16 +29,18 @@ namespace FunnyFriday
             var stateMachine = new StateMachine();
             stateMachine.AddStack(new Intro(wnd));
 
-            while(wnd.IsOpen)
+            Sound sound = new Sound(new SoundBuffer("Assets/Music/freakyMenu.ogg"));
+            sound.Play();
+            while (wnd.IsOpen)
             {
+                
                 wnd.DispatchEvents();
                 wnd.Clear(Color.Black);
 
                 stateMachine.GetActiveStack().Update(ref deltaTime);
-                stateMachine.GetActiveStack().InputHandling(stateMachine);
+                stateMachine.GetActiveStack().InputHandling(stateMachine, ref deltaTime);
                 stateMachine.GetActiveStack().Draw();
                 
-
                 wnd.Display();
             }
         }
