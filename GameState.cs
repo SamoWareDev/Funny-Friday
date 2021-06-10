@@ -4,6 +4,7 @@ using SFML.System;
 using SFML.Window;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace FunnyFriday
@@ -398,9 +399,16 @@ namespace FunnyFriday
         RectangleShape rightSide;
         RectangleShape top;
 
+        string[] weekInfo;
+        Font regularFont;
+        Text regularText;
+        List<Text> textContainer = new List<Text>();
 
         public WeekSelect(RenderWindow _wnd)
         {
+            weekInfo = File.ReadAllLines("Assets/weekInfo.txt");
+            regularFont = new Font("Assets/Fonts/vcr.ttf");
+
             wnd = _wnd;
 
             for (int i = 0; i < 7; i++)
@@ -440,6 +448,16 @@ namespace FunnyFriday
             spriteContainer["arrow"].Scale = new Vector2f(0.8f, 0.8f);
             spriteContainer["arrow"].Position = new Vector2f(rightSide.Position.X + 50, 400);
 
+            textContainer.Add(new Text(weekInfo[0].Split(',')[0], regularFont));
+            textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width, 0);
+            for (int i = 1; i < weekInfo[0].Split(',').Length - 1; i++)
+            {
+                textContainer.Add(new Text(weekInfo[0].Split(',')[i], regularFont));
+                textContainer[i].Position = new Vector2f(textContainer[i].GetLocalBounds().Width + 50, rightSide.Position.X + 100 * (i - 1));
+            }
+            textContainer.Add(new Text("Week Score: " + weekInfo[0].Split(',')[textContainer.Count], regularFont));
+            textContainer[textContainer.Count - 1].Position = new Vector2f(0, 0);
+
             top = new RectangleShape(new Vector2f(wnd.Size.X, 350));
             top.FillColor = new Color(255, 69, 0, 255);
             top.Position = new Vector2f(0, 20);
@@ -456,10 +474,23 @@ namespace FunnyFriday
 
             foreach (var s in spriteContainer)
                 wnd.Draw(s.Value);
+
+            foreach (var s in textContainer)
+                wnd.Draw(s);
         }
 
         public override void Update(ref Clock deltaTime)
         {
+            textContainer[0].DisplayedString = weekInfo[weekChoice].Split(',')[0];
+            textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width, 0);
+            for (int i = 1; i < weekInfo[weekChoice].Split(',').Length - 1; i++)
+            {
+                textContainer[i].DisplayedString = weekInfo[weekChoice].Split(',')[i];
+                textContainer[i].Position = new Vector2f(textContainer[i].GetLocalBounds().Width + 50, rightSide.Position.X + 100 * (i - 1));
+            }
+            textContainer[textContainer.Count - 1].DisplayedString = "Week Score: " + weekInfo[weekChoice].Split(',')[textContainer.Count - 1];
+            textContainer[textContainer.Count - 1].Position = new Vector2f(0, 0);
+
             if (bLeft && weekContainer[weekChoice].Position.X <= (wnd.Size.X / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2))
             {
                 foreach (Sprite week in weekContainer)
