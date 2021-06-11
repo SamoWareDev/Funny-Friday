@@ -27,7 +27,7 @@ namespace FunnyFriday
             wnd.Closed += WindowClosed;
 
             var stateMachine = new StateMachine();
-            stateMachine.AddStack(new Intro(wnd));
+            stateMachine.AddStack(new Gameplay(wnd, 0, 1));
 
             Sound sound = new Sound(new SoundBuffer("Assets/Music/freakyMenu.ogg"));
             sound.Play();

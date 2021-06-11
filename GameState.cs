@@ -411,7 +411,7 @@ namespace FunnyFriday
 
             wnd = _wnd;
 
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < weekInfo.Length; i++)
             {
                 weekContainer.Add(new Sprite(new Texture($"Assets/storymenu/week{i}.png")));
                 weekContainer[i].Position = new Vector2f(wnd.Size.X / 2 - weekContainer[i].GetLocalBounds().Width / 2 + (weekContainer[i].GetLocalBounds().Width * i) + 100 * i, 400);
@@ -446,21 +446,20 @@ namespace FunnyFriday
 
             spriteContainer.Add("arrow", new Sprite(difficultyTextures[3]));
             spriteContainer["arrow"].Scale = new Vector2f(0.8f, 0.8f);
-            spriteContainer["arrow"].Position = new Vector2f(rightSide.Position.X + 50, 400);
+            spriteContainer["arrow"].Position = new Vector2f(rightSide.Position.X + 20, 400);
+
+            top = new RectangleShape(new Vector2f(wnd.Size.X, 320));
+            top.FillColor = new Color(255, 69, 0, 255);
+            top.Position = new Vector2f(0, 50);
 
             textContainer.Add(new Text(weekInfo[0].Split(',')[0], regularFont));
-            textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width, 0);
-            for (int i = 1; i < weekInfo[0].Split(',').Length - 1; i++)
-            {
-                textContainer.Add(new Text(weekInfo[0].Split(',')[i], regularFont));
-                textContainer[i].Position = new Vector2f(textContainer[i].GetLocalBounds().Width + 50, rightSide.Position.X + 100 * (i - 1));
-            }
-            textContainer.Add(new Text("Week Score: " + weekInfo[0].Split(',')[textContainer.Count], regularFont));
-            textContainer[textContainer.Count - 1].Position = new Vector2f(0, 0);
+            textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width - 20, 0);
 
-            top = new RectangleShape(new Vector2f(wnd.Size.X, 350));
-            top.FillColor = new Color(255, 69, 0, 255);
-            top.Position = new Vector2f(0, 20);
+            textContainer.Add(new Text(weekInfo[0].Split(',')[1].Replace('-', '\n'), regularFont));
+            textContainer[1].Position = new Vector2f(textContainer[0].GetLocalBounds().Width / 2, 450);
+
+            textContainer.Add(new Text("Week Score: " + weekInfo[0].Split(',')[textContainer.Count], regularFont));
+            textContainer[2].Position = new Vector2f(20, 0);
         }
 
         public override void Draw()
@@ -482,14 +481,14 @@ namespace FunnyFriday
         public override void Update(ref Clock deltaTime)
         {
             textContainer[0].DisplayedString = weekInfo[weekChoice].Split(',')[0];
-            textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width, 0);
-            for (int i = 1; i < weekInfo[weekChoice].Split(',').Length - 1; i++)
-            {
-                textContainer[i].DisplayedString = weekInfo[weekChoice].Split(',')[i];
-                textContainer[i].Position = new Vector2f(textContainer[i].GetLocalBounds().Width + 50, rightSide.Position.X + 100 * (i - 1));
-            }
-            textContainer[textContainer.Count - 1].DisplayedString = "Week Score: " + weekInfo[weekChoice].Split(',')[textContainer.Count - 1];
-            textContainer[textContainer.Count - 1].Position = new Vector2f(0, 0);
+            textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width - 50, 0);
+
+            textContainer[1].DisplayedString = weekInfo[weekChoice].Split(',')[1].Replace('-', '\n');
+            textContainer[1].Position = new Vector2f(textContainer[0].GetLocalBounds().Width / 2, 450);
+
+
+            textContainer[2].DisplayedString = "Week Score: " + weekInfo[weekChoice].Split(',')[textContainer.Count - 1];
+            textContainer[2].Position = new Vector2f(20, 0);
 
             if (bLeft && weekContainer[weekChoice].Position.X <= (wnd.Size.X / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2))
             {
@@ -507,7 +506,7 @@ namespace FunnyFriday
             {
                 case 0:
                     spriteContainer["arrow"].Position = new Vector2f(spriteContainer["arrow"].Position.X, spriteContainer["easy"].Position.Y);
-                        break;
+                    break;
 
                 case 1:
                     spriteContainer["arrow"].Position = new Vector2f(spriteContainer["arrow"].Position.X, spriteContainer["normal"].Position.Y);
@@ -557,5 +556,283 @@ namespace FunnyFriday
         }
     }
 
+    class Gameplay : GameState
+    {
+        RenderWindow wnd;
+        int gameTick = 0;
+        int nWeek = 0;
+        int nDifficulty = 0;
+        int scrollSpeed = 3;
 
+        List<Texture> enemyIdle;
+        List<Texture> enemyLeft;
+        List<Texture> enemyDown;
+        List<Texture> enemyUp;
+        List<Texture> enemyRight;
+
+        List<Texture> playerIdle;
+        List<Texture> playerLeft;
+        List<Texture> playerDown;
+        List<Texture> playerUp;
+        List<Texture> playerRight;
+
+        List<Texture> arrowLeft;
+        List<Texture> arrowDown;
+        List<Texture> arrowUp;
+        List<Texture> arrowRight;
+
+        Dictionary<string, Sprite> spriteContainer = new Dictionary<string, Sprite>();
+        List<Sprite> arrowContainer = new List<Sprite>();
+        List<Sprite> enemyArrowContainer = new List<Sprite>();
+
+        List<Sprite> enemyLane1 = new List<Sprite>();
+        List<Sprite> enemyLane2 = new List<Sprite>();
+        List<Sprite> enemyLane3 = new List<Sprite>();
+        List<Sprite> enemyLane4 = new List<Sprite>();
+
+        List<Sprite> playerLane1 = new List<Sprite>();
+        List<Sprite> playerLane2 = new List<Sprite>();
+        List<Sprite> playerLane3 = new List<Sprite>();
+        List<Sprite> playerLane4 = new List<Sprite>();
+
+        string[] weekFile;
+
+
+        public Gameplay(RenderWindow _wnd, int week, int difficulty) {
+            wnd = _wnd;
+            nWeek = week;
+            nDifficulty = difficulty;
+
+            var textureManager = new TextureManager("Assets/XML/Notes.xml");
+
+            arrowLeft = textureManager.GetTextures(new string[] { "arrowLEFT0000", "left press0003", "left confirm0003" });
+            arrowDown = textureManager.GetTextures(new string[] { "arrowDOWN0000", "down press0003", "down confirm0003" });
+            arrowUp = textureManager.GetTextures(new string[] { "arrowUP0000", "up press0003", "up confirm0003" });
+            arrowRight = textureManager.GetTextures(new string[] { "arrowRIGHT0000", "right press0003", "right confirm0003" });
+
+            textureManager = new TextureManager("Assets/XML/Boyfriend.xml");
+
+            playerIdle = textureManager.GetTextures(430, 443);
+            playerLeft = textureManager.GetTextures(157, 171);
+            playerDown = textureManager.GetTextures(98, 127);
+            playerUp = textureManager.GetTextures(314, 328);
+            playerRight = textureManager.GetTextures(206, 267);
+
+            spriteContainer.Add("player", new Sprite(playerIdle[0]));
+            spriteContainer["player"].Scale = new Vector2f(0.5f, 0.5f);
+
+            arrowContainer.Add(new Sprite(arrowLeft[0]));
+            arrowContainer.Add(new Sprite(arrowDown[0]));
+            arrowContainer.Add(new Sprite(arrowUp[0]));
+            arrowContainer.Add(new Sprite(arrowRight[0]));
+
+            enemyArrowContainer.Add(new Sprite(arrowLeft[0]));
+            enemyArrowContainer.Add(new Sprite(arrowDown[0]));
+            enemyArrowContainer.Add(new Sprite(arrowUp[0]));
+            enemyArrowContainer.Add(new Sprite(arrowRight[0]));
+
+            for (int i = 0; i < 4; i++)
+            {
+                arrowContainer[i].Scale = new Vector2f(0.7f, 0.7f);
+                enemyArrowContainer[i].Scale = new Vector2f(0.7f, 0.7f);
+                arrowContainer[i].Position = new Vector2f(750 + 125 * i, 50);
+                enemyArrowContainer[i].Position = new Vector2f(50 + 125 * i, 50);
+            }
+
+            switch (nWeek) {
+                case 0:
+                    {
+                        weekFile = File.ReadAllLines("Assets/Data/week1.txt");
+                    }
+                    break;
+            }
+
+            for(int i = 0; i < weekFile.Length; i++)
+            {
+                string player = weekFile[i].Split(',')[0];
+                int position = Convert.ToInt32(weekFile[i].Split(',')[1]);
+                string lane = weekFile[i].Split(',')[2];
+
+                switch (player)
+                {
+                    case "1":
+                        {
+                            switch (lane)
+                            {
+                                case "0":
+                                    {
+                                        var temp = new Sprite(arrowLeft[2]);
+                                        temp.Scale = new Vector2f(0.7f, 0.7f);
+                                        temp.Position = new Vector2f(enemyArrowContainer[0].Position.X - 20, position * (scrollSpeed / 1.8f));
+                                        enemyLane1.Add(temp);
+                                    }
+                                    break;
+
+                                case "1":
+                                    {
+                                        var temp = new Sprite(arrowDown[2]);
+                                        temp.Scale = new Vector2f(0.7f, 0.7f);
+                                        temp.Position = new Vector2f(enemyArrowContainer[1].Position.X - 20, position * (scrollSpeed / 1.8f));
+                                        enemyLane2.Add(temp);
+                                    }
+                                    break;
+
+                                case "2":
+                                    {
+                                        var temp = new Sprite(arrowUp[2]);
+                                        temp.Scale = new Vector2f(0.7f, 0.7f);
+                                        temp.Position = new Vector2f(enemyArrowContainer[2].Position.X - 20, position * (scrollSpeed / 1.8f));
+                                        enemyLane3.Add(temp);
+                                    }
+                                    break;
+
+                                case "3":
+                                    {
+                                        var temp = new Sprite(arrowRight[2]);
+                                        temp.Scale = new Vector2f(0.7f, 0.7f);
+                                        temp.Position = new Vector2f(enemyArrowContainer[3].Position.X - 20, position * (scrollSpeed / 1.8f));
+                                        enemyLane4.Add(temp);
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
+
+                    case "2":
+                        {
+                            switch (lane)
+                            {
+                                case "0":
+                                    {
+                                        var temp = new Sprite(arrowLeft[2]);
+                                        temp.Scale = new Vector2f(0.7f, 0.7f);
+                                        temp.Position = new Vector2f(arrowContainer[0].Position.X - 20, position * (scrollSpeed / 1.8f));
+                                        playerLane1.Add(temp);
+                                    }
+                                    break;
+
+                                case "1":
+                                    {
+                                        var temp = new Sprite(arrowDown[2]);
+                                        temp.Scale = new Vector2f(0.7f, 0.7f);
+                                        temp.Position = new Vector2f(arrowContainer[1].Position.X - 20, position * (scrollSpeed / 1.8f));
+                                        playerLane2.Add(temp);
+                                    }
+                                    break;
+
+                                case "2":
+                                    {
+                                        var temp = new Sprite(arrowUp[2]);
+                                        temp.Scale = new Vector2f(0.7f, 0.7f);
+                                        temp.Position = new Vector2f(arrowContainer[2].Position.X - 20, position * (scrollSpeed / 1.8f));
+                                        playerLane3.Add(temp);
+                                    }
+                                    break;
+
+                                case "3":
+                                    {
+                                        var temp = new Sprite(arrowRight[2]);
+                                        temp.Scale = new Vector2f(0.7f, 0.7f);
+                                        temp.Position = new Vector2f(arrowContainer[3].Position.X - 20, position * (scrollSpeed / 1.8f));
+                                        playerLane4.Add(temp);
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+
+        public override void Draw()
+        {
+            foreach (var s in spriteContainer)
+                wnd.Draw(s.Value);
+
+            foreach (var s in arrowContainer)
+                wnd.Draw(s);
+
+            foreach (var s in enemyArrowContainer)
+                wnd.Draw(s);
+
+            foreach (var s in playerLane1)
+                wnd.Draw(s);
+
+            foreach (var s in playerLane2)
+                wnd.Draw(s);
+
+            foreach (var s in playerLane3)
+                wnd.Draw(s);
+
+            foreach (var s in playerLane4)
+                wnd.Draw(s);
+
+            foreach (var s in enemyLane1)
+                wnd.Draw(s);
+
+            foreach (var s in enemyLane2)
+                wnd.Draw(s);
+
+            foreach (var s in enemyLane3)
+                wnd.Draw(s);
+
+            foreach (var s in enemyLane4)
+                wnd.Draw(s);
+        }
+
+        public override void Update(ref Clock deltaTime)
+        {
+            foreach (var s in playerLane1)
+                s.Position = new Vector2f(s.Position.X, s.Position.Y - 1);
+                                                                     
+            foreach (var s in playerLane2)                           
+                s.Position = new Vector2f(s.Position.X, s.Position.Y - 1);
+                                                                     
+            foreach (var s in playerLane3)                           
+                s.Position = new Vector2f(s.Position.X, s.Position.Y - 1);
+                                                                     
+            foreach (var s in playerLane4)                           
+                s.Position = new Vector2f(s.Position.X, s.Position.Y - 1);
+
+            try
+            {
+
+                foreach (var s in enemyLane1)
+                {
+                    if (s.Position.Y <= enemyArrowContainer[0].Position.Y)
+                        enemyLane1.Remove(s);
+                    s.Position = new Vector2f(s.Position.X, s.Position.Y - 1 * scrollSpeed);
+                }
+
+
+                foreach (var s in enemyLane2)
+                {
+                        if (s.Position.Y <= enemyArrowContainer[0].Position.Y)
+                            enemyLane2.Remove(s);
+                        s.Position = new Vector2f(s.Position.X, s.Position.Y - 1 * scrollSpeed);
+                }
+
+                foreach (var s in enemyLane3)
+                {
+                        if (s.Position.Y <= enemyArrowContainer[0].Position.Y)
+                            enemyLane3.Remove(s);
+                        s.Position = new Vector2f(s.Position.X, s.Position.Y - 1 * scrollSpeed);
+                }
+
+                foreach (var s in enemyLane4)
+                {
+                        if (s.Position.Y <= enemyArrowContainer[0].Position.Y)
+                            enemyLane4.Remove(s);
+                        s.Position = new Vector2f(s.Position.X, s.Position.Y - 1 * scrollSpeed);
+                }
+            }
+            catch { }
+        }
+
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
+        {
+            
+        }
+    }
 }
