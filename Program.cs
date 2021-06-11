@@ -40,7 +40,8 @@ namespace FunnyFriday
                 stateMachine.GetActiveStack().Update(ref deltaTime);
                 stateMachine.GetActiveStack().InputHandling(stateMachine, ref deltaTime);
                 stateMachine.GetActiveStack().Draw();
-                
+
+
                 wnd.Display();
             }
         }

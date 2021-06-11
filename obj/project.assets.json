@@ -444,19 +444,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\playf\\.nuget\\packages\\": {}
+    "C:\\Users\\PC\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\playf\\Desktop\\Programming\\C#\\GitHub\\Funny-Friday\\FunnyFriday.csproj",
+      "projectUniqueName": "C:\\Users\\PC\\Desktop\\Progaming\\GitHub\\Funny-Friday\\FunnyFriday.csproj",
       "projectName": "FunnyFriday",
-      "projectPath": "C:\\Users\\playf\\Desktop\\Programming\\C#\\GitHub\\Funny-Friday\\FunnyFriday.csproj",
-      "packagesPath": "C:\\Users\\playf\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\playf\\Desktop\\Programming\\C#\\GitHub\\Funny-Friday\\obj\\",
+      "projectPath": "C:\\Users\\PC\\Desktop\\Progaming\\GitHub\\Funny-Friday\\FunnyFriday.csproj",
+      "packagesPath": "C:\\Users\\PC\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\PC\\Desktop\\Progaming\\GitHub\\Funny-Friday\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\playf\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\PC\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
