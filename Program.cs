@@ -4,6 +4,7 @@ using SFML.Window;
 using SFML.Audio;
 using SFML.Graphics;
 using SFML.System;
+using System.Threading;
 
 namespace FunnyFriday
 {
@@ -23,24 +24,23 @@ namespace FunnyFriday
             Clock deltaTime = new Clock();
 
             RenderWindow wnd = new RenderWindow(new VideoMode((uint)SCREEN_WIDTH, (uint)SCREEN_HEIGTH), "GetIt", Styles.Titlebar | Styles.Default);
-            wnd.SetFramerateLimit(144);
+            wnd.SetFramerateLimit(60);
             wnd.Closed += WindowClosed;
 
             var stateMachine = new StateMachine();
             stateMachine.AddStack(new Gameplay(wnd, 0, 1));
 
-            Sound sound = new Sound(new SoundBuffer("Assets/Music/freakyMenu.ogg"));
-            sound.Play();
             while (wnd.IsOpen)
             {
                 
                 wnd.DispatchEvents();
                 wnd.Clear(Color.Black);
 
-                stateMachine.GetActiveStack().Update(ref deltaTime);
-                stateMachine.GetActiveStack().InputHandling(stateMachine, ref deltaTime);
-                stateMachine.GetActiveStack().Draw();
 
+
+                stateMachine.GetActiveStack().InputHandling(stateMachine, ref deltaTime);
+                stateMachine.GetActiveStack().Update(ref deltaTime);
+                stateMachine.GetActiveStack().Draw();
 
                 wnd.Display();
             }

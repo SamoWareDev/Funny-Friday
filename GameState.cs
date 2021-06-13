@@ -5,6 +5,7 @@ using SFML.Window;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SFML.Audio;
 using System.Text;
 
 namespace FunnyFriday
@@ -563,9 +564,10 @@ namespace FunnyFriday
         int gameTick = 0;
         int nWeek = 0;
         int nDifficulty = 0;
-        float scrollSpeed = 5.0f;
+        float scrollSpeed = 1.5f;
 
         Clock animationTime;
+        Clock musicTime;
 
         List<Texture> enemyIdle;
         List<Texture> enemyLeft;
@@ -584,6 +586,8 @@ namespace FunnyFriday
         List<Texture> arrowUp;
         List<Texture> arrowRight;
 
+        List<Texture> noteArray;
+
         Dictionary<string, Sprite> spriteContainer = new Dictionary<string, Sprite>();
         List<Sprite> arrowContainer = new List<Sprite>();
         List<Sprite> enemyArrowContainer = new List<Sprite>();
@@ -591,25 +595,22 @@ namespace FunnyFriday
         List<List<Sprite>> enemyLane = new List<List<Sprite>>();
         List<List<Sprite>> playerLane = new List<List<Sprite>>();
 
-        List<Sprite> enemyLane1 = new List<Sprite>();
-        List<Sprite> enemyLane2 = new List<Sprite>();
-        List<Sprite> enemyLane3 = new List<Sprite>();
-        List<Sprite> enemyLane4 = new List<Sprite>();
-
-        List<Sprite> playerLane1 = new List<Sprite>();
-        List<Sprite> playerLane2 = new List<Sprite>();
-        List<Sprite> playerLane3 = new List<Sprite>();
-        List<Sprite> playerLane4 = new List<Sprite>();
-
         string[] weekFile;
 
         bool bLeft = false;
         bool bDown = false;
         bool bUp = false;
         bool bRight = false;
+
+        Song currentSong;
+
+        Sound instrumental;
+        Sound voice;
+
         #endregion
 
-        public Gameplay(RenderWindow _wnd, int week, int difficulty) {
+        public Gameplay(RenderWindow _wnd, int week, int difficulty)
+        {
             wnd = _wnd;
             nWeek = week;
             nDifficulty = difficulty;
@@ -620,6 +621,8 @@ namespace FunnyFriday
             arrowDown = textureManager.GetTextures(new string[] { "arrowDOWN0000", "down press0003", "down confirm0003" });
             arrowUp = textureManager.GetTextures(new string[] { "arrowUP0000", "up press0003", "up confirm0003" });
             arrowRight = textureManager.GetTextures(new string[] { "arrowRIGHT0000", "right press0003", "right confirm0003" });
+
+            noteArray = textureManager.GetTextures(new string[] { "left confirm0003", "down confirm0003", "up confirm0003", "right confirm0003" });
 
             textureManager = new TextureManager("Assets/XML/Boyfriend.xml");
 
@@ -651,7 +654,8 @@ namespace FunnyFriday
                 enemyArrowContainer[i].Position = new Vector2f(50 + 125 * i, 50);
             }
 
-            switch (nWeek) {
+            switch (nWeek)
+            {
                 case 0:
                     {
                         weekFile = File.ReadAllLines("Assets/Data/week1.txt");
@@ -659,117 +663,48 @@ namespace FunnyFriday
                     break;
             }
 
-            for(int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 enemyLane.Add(new List<Sprite>());
                 playerLane.Add(new List<Sprite>());
             }
 
-            for(int i = 0; i < weekFile.Length; i++)
-            {
-                string player = weekFile[i].Split(',')[0];
-                int position = Convert.ToInt32(weekFile[i].Split(',')[1]);
-                string lane = weekFile[i].Split(',')[2];
+            var chart = new ChartParser("madness");
+            currentSong = chart.GetSong();
 
-                switch (player)
-                {
-                    case "1":
+            for (int i = 0; i < currentSong.song.notes.Length; i++)
+                for (int j = 0; j < currentSong.song.notes[i].sectionNotes.Count; j++)
+                    for (int k = 0; k < currentSong.song.notes[i].sectionNotes[j].Length; k++)
+                    {
+                        double yPos = currentSong.song.notes[i].sectionNotes[j][0];
+                        int lane = Convert.ToInt32(currentSong.song.notes[i].sectionNotes[j][1]);
+                        double length = currentSong.song.notes[i].sectionNotes[j][2];
+                        try
                         {
-                            switch (lane)
+                            if (currentSong.song.notes[i].mustHitSection)
                             {
-                                case "0":
-                                    {
-                                        var temp = new Sprite(arrowLeft[2]);
-                                        temp.Scale = new Vector2f(0.7f, 0.7f);
-                                        temp.Position = new Vector2f(enemyArrowContainer[0].Position.X - 20, position * (scrollSpeed / 1.6f));
-                                        enemyLane[0].Add(temp);
-                                    }
-                                    break;
-
-                                case "1":
-                                    {
-                                        var temp = new Sprite(arrowDown[2]);
-                                        temp.Scale = new Vector2f(0.7f, 0.7f);
-                                        temp.Position = new Vector2f(enemyArrowContainer[1].Position.X - 20, position * (scrollSpeed / 1.6f));
-                                        enemyLane[1].Add(temp);
-                                    }
-                                    break;
-
-                                case "2":
-                                    {
-                                        var temp = new Sprite(arrowUp[2]);
-                                        temp.Scale = new Vector2f(0.7f, 0.7f);
-                                        temp.Position = new Vector2f(enemyArrowContainer[2].Position.X - 20, position * (scrollSpeed / 1.6f));
-                                        enemyLane[2].Add(temp);
-                                    }
-                                    break;
-
-                                case "3":
-                                    {
-                                        var temp = new Sprite(arrowRight[2]);
-                                        temp.Scale = new Vector2f(0.7f, 0.7f);
-                                        temp.Position = new Vector2f(enemyArrowContainer[3].Position.X - 20, position * (scrollSpeed / 1.6f));
-                                        enemyLane[3].Add(temp);
-                                    }
-                                    break;
+                                playerLane[lane].Add(new Sprite(noteArray[lane]));
+                                playerLane[lane][playerLane[lane].Count - 1].Position = new Vector2f(arrowContainer[lane].Position.X - 20, (float)yPos * scrollSpeed);
+                                playerLane[lane][playerLane[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
+                            }
+                            else
+                            {
+                                enemyLane[lane].Add(new Sprite(noteArray[lane]));
+                                enemyLane[lane][enemyLane[lane].Count - 1].Position = new Vector2f(enemyArrowContainer[lane].Position.X - 20, (float)yPos * scrollSpeed);
+                                enemyLane[lane][enemyLane[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                         }
-                        break;
+                        catch { }
+                    }
 
-                    case "2":
-                        {
-                            switch (lane)
-                            {
-                                case "0":
-                                    {
-                                        var temp = new Sprite(arrowLeft[2]);
-                                        temp.Scale = new Vector2f(0.7f, 0.7f);
-                                        temp.Position = new Vector2f(arrowContainer[0].Position.X - 20, position * (scrollSpeed / 1.6f));
-                                        playerLane[0].Add(temp);
-                                    }
-                                    break;
+            instrumental = new Sound(new SoundBuffer("Assets/Music/Bopeebo/Inst.ogg"));
+            voice = new Sound(new SoundBuffer("Assets/Music/Bopeebo/Voices.ogg"));
 
-                                case "1":
-                                    {
-                                        var temp = new Sprite(arrowDown[2]);
-                                        temp.Scale = new Vector2f(0.7f, 0.7f);
-                                        temp.Position = new Vector2f(arrowContainer[1].Position.X - 20, position * (scrollSpeed / 1.6f));
-                                        playerLane[1].Add(temp);
-                                    }
-                                    break;
+            voice.Play();
+            instrumental.Play();
 
-                                case "2":
-                                    {
-                                        var temp = new Sprite(arrowUp[2]);
-                                        temp.Scale = new Vector2f(0.7f, 0.7f);
-                                        temp.Position = new Vector2f(arrowContainer[2].Position.X - 20, position * (scrollSpeed / 1.6f));
-                                        playerLane[2].Add(temp);
-                                    }
-                                    break;
-
-                                case "3":
-                                    {
-                                        var temp = new Sprite(arrowRight[2]);
-                                        temp.Scale = new Vector2f(0.7f, 0.7f);
-                                        temp.Position = new Vector2f(arrowContainer[3].Position.X - 20, position * (scrollSpeed / 1.6f));
-                                        playerLane[3].Add(temp);
-                                    }
-                                    break;
-                            }
-                        }
-                        break;
-                }
-            }
             animationTime = new Clock();
-        }
-
-        private bool AreKeysPressed()
-        {
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Down) || Keyboard.IsKeyPressed(Keyboard.Key.Left) ||
-                Keyboard.IsKeyPressed(Keyboard.Key.Right) || Keyboard.IsKeyPressed(Keyboard.Key.Up))
-                return true;
-
-            return false;
+            musicTime = new Clock();
         }
 
         public override void Draw()
@@ -782,31 +717,47 @@ namespace FunnyFriday
 
             foreach (var s in enemyArrowContainer)
                 wnd.Draw(s);
-            
-            foreach(var s in enemyLane)
+
+            foreach (var s in enemyLane)
                 foreach (var d in s)
                     wnd.Draw(d);
 
             foreach (var s in playerLane)
                 foreach (var d in s)
                     wnd.Draw(d);
+
+            
         }
 
         public override void Update(ref Clock deltaTime)
         {
+            var delta = musicTime.ElapsedTime.AsSeconds() * 1000.0f * scrollSpeed;
+            if (delta <= 16.0f  * scrollSpeed)
+                delta = 16.0f * scrollSpeed;
+
             try
             {
                 for (int i = 0; i < playerLane.Count; i++)
                     for (int j = 0; j < playerLane[i].Count; j++)
-                        playerLane[i][j].Position = new Vector2f(playerLane[i][j].Position.X, playerLane[i][j].Position.Y - 1 * scrollSpeed);
+                    {
+                        playerLane[i][j].Position = new Vector2f(playerLane[i][j].Position.X, playerLane[i][j].Position.Y - delta);
+
+                        if(playerLane[i][j].Position.Y <= arrowContainer[i].Position.Y - 175.0f)
+                            playerLane[i].Remove(playerLane[i][j]);
+                    }
+                        
 
                 for (int i = 0; i < enemyLane.Count; i++)
-                    for(int j = 0; j < enemyLane[i].Count; j++)
+                    for (int j = 0; j < enemyLane[i].Count; j++)
                     {
                         if (enemyLane[i][j].Position.Y <= enemyArrowContainer[i].Position.Y)
                             enemyLane[i].Remove(enemyLane[i][j]);
-                        enemyLane[i][j].Position = new Vector2f(enemyLane[i][j].Position.X, enemyLane[i][j].Position.Y - 1 * scrollSpeed);
+
+                        enemyLane[i][j].Position = new Vector2f(enemyLane[i][j].Position.X, enemyLane[i][j].Position.Y - delta);
                     }
+
+                musicTime.Restart();
+
             }
             catch { }
 
@@ -816,21 +767,21 @@ namespace FunnyFriday
                 spriteContainer["player"].Texture = playerIdle[gameTick % playerIdle.Count];
                 gameTick++;
                 animationTime.Restart();
-            }          
+            }
         }
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Y) && deltaTime.ElapsedTime.AsSeconds() >= 0.20f)
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Y) && deltaTime.ElapsedTime.AsSeconds() >= 0.01f)
             {
                 var activeArrow = arrowLeft[1];
                 arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[0].Texture = activeArrow;
 
                 if (playerLane[0].Count > 0)
-                    if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 60 * scrollSpeed)
+                    if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 100 * scrollSpeed)
                     {
-                        playerLane[0].Remove(playerLane[0][0]);
+                        playerLane[0].RemoveAt(0);
 
                         var activeTexture = playerLeft;
                         var index = gameTick % activeTexture.Count;
@@ -850,16 +801,16 @@ namespace FunnyFriday
                 arrowContainer[0].Texture = activeArrow;
             }
 
-            if (Keyboard.IsKeyPressed(Keyboard.Key.X) && deltaTime.ElapsedTime.AsSeconds() >= 0.20f)
+            if (Keyboard.IsKeyPressed(Keyboard.Key.X) && deltaTime.ElapsedTime.AsSeconds() >= 0.01f)
             {
                 var activeArrow = arrowDown[1];
                 arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[1].Texture = activeArrow;
 
                 if (playerLane[1].Count > 0)
-                    if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 60 * scrollSpeed)
+                    if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 100 * scrollSpeed)
                     {
-                        playerLane[1].Remove(playerLane[1][0]);
+                        playerLane[1].RemoveAt(0);
 
                         var activeTexture = playerDown;
                         var index = gameTick % activeTexture.Count;
@@ -878,16 +829,16 @@ namespace FunnyFriday
                 arrowContainer[1].Texture = activeArrow;
             }
 
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Comma) && deltaTime.ElapsedTime.AsSeconds() >= 0.20f)
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Comma) && deltaTime.ElapsedTime.AsSeconds() >= 0.01f)
             {
                 var activeArrow = arrowUp[1];
                 arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[2].Texture = activeArrow;
 
                 if (playerLane[2].Count > 0)
-                    if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 60 * scrollSpeed)
+                    if (playerLane[2][0].Position.Y  <= arrowContainer[2].Position.Y + 100 * scrollSpeed)
                     {
-                        playerLane[2].Remove(playerLane[2][0]);
+                        playerLane[2].RemoveAt(0);
 
                         var activeTexture = playerUp;
                         var index = gameTick % activeTexture.Count;
@@ -908,16 +859,16 @@ namespace FunnyFriday
             }
 
 
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Period) && deltaTime.ElapsedTime.AsSeconds() >= 0.20f)
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Period) && deltaTime.ElapsedTime.AsSeconds() >= 0.01f)
             {
                 var activeArrow = arrowRight[1];
                 arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[3].Texture = activeArrow;
 
                 if (playerLane[3].Count > 0)
-                    if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 60 * scrollSpeed)
+                    if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 100 * scrollSpeed)
                     {
-                        playerLane[3].Remove(playerLane[3][0]);
+                        playerLane[3].RemoveAt(0);
 
                         gameTick++;
                         deltaTime.Restart();
@@ -930,7 +881,6 @@ namespace FunnyFriday
                 arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[3].Texture = activeArrow;
             }
-
         }
     }
 }
