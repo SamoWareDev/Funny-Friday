@@ -24,11 +24,11 @@ namespace FunnyFriday
             Clock deltaTime = new Clock();
 
             RenderWindow wnd = new RenderWindow(new VideoMode((uint)SCREEN_WIDTH, (uint)SCREEN_HEIGTH), "GetIt", Styles.Titlebar | Styles.Default);
-            wnd.SetFramerateLimit(60);
+            wnd.SetFramerateLimit(144);
             wnd.Closed += WindowClosed;
 
             var stateMachine = new StateMachine();
-            stateMachine.AddStack(new Gameplay(wnd, 0, 1));
+            stateMachine.AddStack(new PlayState(wnd, 0, 1));
 
             while (wnd.IsOpen)
             {
