@@ -4,9 +4,6 @@ using SFML.System;
 using SFML.Window;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
 
 namespace FunnyFriday
 {
@@ -22,6 +19,7 @@ namespace FunnyFriday
         int misses = 0;
 
         Clock animationTime;
+        Clock animationTime2;
         Clock musicTime;
 
         List<Texture> enemyIdle;
@@ -53,23 +51,20 @@ namespace FunnyFriday
         List<Texture> ratingTextures = new List<Texture>();
         List<Sprite> ratingContainer = new List<Sprite>();
 
+        int currPlayerPos = -1;
+        int currEnemyPos = -1;
 
-        bool bLeft = false;
-        bool bDown = false;
-        bool bUp = false;
-        bool bRight = false;
-
+              
         Song currentSong;
 
         Sound instrumental;
         Sound voice;
 
-        [DllImport("User32.dll")]
-        public static extern bool GetAsyncKeyState(int key);
-
         Font regularFont;
         Text scoreText;
         Text missText;
+
+        float delta = 0.0f;
 
         #endregion
 
@@ -86,6 +81,10 @@ namespace FunnyFriday
             missText = new Text("Miss: " + score, regularFont);
             missText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, missText.GetLocalBounds().Height);
 
+            spriteContainer.Add("backcock", new Sprite(new Texture("Assets/red.png")));
+            spriteContainer.Add("background", new Sprite(new Texture("Assets/island.png")));
+            spriteContainer["background"].Scale = new Vector2f(0.65f, 0.65f);
+            spriteContainer["background"].Position = new Vector2f(-600.0f, -200.0f);
 
             var textureManager = new TextureManager("Assets/XML/Notes.xml");
 
@@ -106,7 +105,19 @@ namespace FunnyFriday
 
             spriteContainer.Add("player", new Sprite(playerIdle[0]));
             spriteContainer["player"].Scale = new Vector2f(0.5f, 0.5f);
-            spriteContainer["player"].Position = new Vector2f(850, 400);
+            spriteContainer["player"].Position = new Vector2f(900, 400);
+
+            textureManager = new TextureManager("Assets/XML/tricky.xml");
+
+            enemyIdle = textureManager.GetTextures(4, 29);
+            enemyLeft = textureManager.GetTextures(67, 103);
+            enemyDown = textureManager.GetTextures(30, 66);
+            enemyUp = textureManager.GetTextures(132, 169);
+            enemyRight = textureManager.GetTextures(104, 131);
+
+            spriteContainer.Add("enemy", new Sprite(enemyIdle[0]));
+            spriteContainer["enemy"].Scale = new Vector2f(0.4f, 0.4f);
+            spriteContainer["enemy"].Position = new Vector2f(150, 300);
 
             arrowContainer.Add(new Sprite(arrowLeft[0]));
             arrowContainer.Add(new Sprite(arrowDown[0]));
@@ -133,7 +144,7 @@ namespace FunnyFriday
                 playerLane.Add(new List<Sprite>());
             }
 
-            var chart = new ChartParser("Assets/Music/Philly/blammed");
+            var chart = new ChartParser("madness");
             currentSong = chart.GetSong();
 
             for (int i = 0; i < currentSong.song.notes.Length; i++)
@@ -160,17 +171,14 @@ namespace FunnyFriday
                     catch { }
                 }
 
-            //ratingTextures.Add(new Texture("Assets/Ratings/sick.png"));
-            //ratingTextures.Add(new Texture("Assets/Ratings/good.png"));
-            //ratingTextures.Add(new Texture("Assets/Ratings/bad.png"));
-
-            instrumental = new Sound(new SoundBuffer("Assets/Music/Philly/Inst.ogg"));
-            voice = new Sound(new SoundBuffer("Assets/Music/Philly/Voices.ogg"));
+            instrumental = new Sound(new SoundBuffer("Assets/Music/Bopeebo/Inst.ogg"));
+            voice = new Sound(new SoundBuffer("Assets/Music/Bopeebo/Voices.ogg"));
 
             voice.Play();
             instrumental.Play();
 
             animationTime = new Clock();
+            animationTime2 = new Clock();
             musicTime = new Clock();
         }
 
@@ -202,9 +210,7 @@ namespace FunnyFriday
 
         public override void Update(ref Clock deltaTime)
         {
-            float delta = musicTime.ElapsedTime.AsSeconds() * 1000.0f * (float)scrollSpeed;
-            if (delta <= 6.5f * scrollSpeed)
-                delta = 6.5f * scrollSpeed;
+            delta = musicTime.ElapsedTime.AsSeconds() * 1000.0f * (float)scrollSpeed;
 
             try
             {
@@ -227,43 +233,133 @@ namespace FunnyFriday
                     for (int j = 0; j < enemyLane[i].Count; j++)
                     {
                         if (enemyLane[i][j].Position.Y <= enemyArrowContainer[i].Position.Y)
+                        {
+                            currEnemyPos = i;
                             enemyLane[i].Remove(enemyLane[i][j]);
+                        }
 
                         enemyLane[i][j].Position = new Vector2f(enemyLane[i][j].Position.X, enemyLane[i][j].Position.Y - delta);
                     }
-
-                musicTime.Restart();
             }
             catch { }
+
+            musicTime.Restart();
         }
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
-            //try
-            //{
-            //    if (ratingContainer.Count > 0 && animationTime.ElapsedTime.AsSeconds() >= 0.04f)
-            //    {
-            //        foreach (var s in ratingContainer)
-            //        {
-            //            s.Position = new Vector2f(s.Position.X, s.Position.Y - 2);
-
-            //            if (s.Position.Y < 720 / 2 - 25)
-            //                ratingContainer.Remove(s);
-            //        }
-            //        animationTime.Restart();
-            //    }
-            //}
-            //catch { }
-
             if (animationTime.ElapsedTime.AsSeconds() >= 0.04f)
             {
-                spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)playerIdle[gameTick % playerIdle.Count].Size.X, (int)playerIdle[gameTick % playerIdle.Count].Size.Y);
-                spriteContainer["player"].Texture = playerIdle[gameTick % playerIdle.Count];
+                switch (currPlayerPos)
+                {
+                    case -1:
+                        {
+                            spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)playerIdle[gameTick % playerIdle.Count].Size.X, (int)playerIdle[gameTick % playerIdle.Count].Size.Y);
+                            spriteContainer["player"].Texture = playerIdle[gameTick % playerIdle.Count];
+                        }
+                        break;
+
+                    case 0:
+                        {
+                            var activeTexture = playerLeft;
+                            var index = gameTick % activeTexture.Count;
+
+                            spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
+                            spriteContainer["player"].Texture = activeTexture[index];
+                        }
+                        break;
+
+                    case 1:
+                        {
+                            var activeTexture = playerDown;
+                            var index = gameTick % activeTexture.Count;
+
+                            spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
+                            spriteContainer["player"].Texture = activeTexture[index];
+                        }
+                        break;
+
+                    case 2:
+                        {
+                            var activeTexture = playerUp;
+                            var index = gameTick % activeTexture.Count;
+
+                            spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
+                            spriteContainer["player"].Texture = activeTexture[index];
+                        }
+                        break;
+
+                    case 3:
+                        {
+                            var activeTexture = playerRight;
+                            var index = gameTick % activeTexture.Count;
+
+                            spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
+                            spriteContainer["player"].Texture = activeTexture[index];
+                        }
+                        break;
+                }
+
+                switch (currEnemyPos)
+                {
+                    case -1:
+                        {
+                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)enemyIdle[gameTick % enemyIdle.Count].Size.X, (int)enemyIdle[gameTick % enemyIdle.Count].Size.Y);
+                            spriteContainer["enemy"].Texture = enemyIdle[gameTick % enemyIdle.Count];
+                        }
+                        break;
+                    case 0:
+                        {
+                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)enemyLeft[gameTick % enemyLeft.Count].Size.X, (int)enemyLeft[gameTick % enemyLeft.Count].Size.Y);
+                            spriteContainer["enemy"].Texture = enemyLeft[gameTick % enemyLeft.Count];
+                        }
+                        break;
+
+                    case 1:
+                        {
+                            var activeTexture = enemyDown;
+                            var index = gameTick % activeTexture.Count;
+
+                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[0].Size.X, (int)activeTexture[0].Size.Y);
+                            spriteContainer["enemy"].Texture = activeTexture[0];
+                        }
+                        break;
+                    case 2:
+                        {
+                            var activeTexture = enemyUp;
+                            var index = gameTick % activeTexture.Count;
+
+                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[0].Size.X, (int)activeTexture[0].Size.Y);
+                            spriteContainer["enemy"].Texture = activeTexture[0];
+                        }
+                        break;
+                    case 3:
+                        {
+                            var activeTexture = enemyRight;
+                            var index = gameTick % activeTexture.Count;
+
+                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[0].Size.X, (int)activeTexture[0].Size.Y);
+                            spriteContainer["enemy"].Texture = activeTexture[0];
+                        }
+                        break;
+                }
+
                 gameTick++;
                 animationTime.Restart();
+
+                if (animationTime2.ElapsedTime.AsSeconds() >= 0.01f)
+                {
+                    if (currPlayerPos != -1)
+                        currPlayerPos = -1;
+
+                    if (currEnemyPos != -1)
+                        currEnemyPos = -1;
+
+                    animationTime2.Restart();
+                }
             }
 
-            if (GetAsyncKeyState(0x59))
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Y))
             {
                 var activeArrow = arrowLeft[1];
                 arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
@@ -272,42 +368,26 @@ namespace FunnyFriday
                 if (playerLane[0].Count > 0)
                     if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 120 * scrollSpeed)
                     {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.15f / scrollSpeed)
+                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f / scrollSpeed)
                         {
                             if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 40 * scrollSpeed)
                             {
                                 score += 100;
-                                //ratingContainer.Add(new Sprite(ratingTextures[0]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.3f, 0.3f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2 + 60,
-                                //    720 / 2);
                             }
                             else if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 80 * scrollSpeed)
                             {
                                 score += 50;
-                                //ratingContainer.Add(new Sprite(ratingTextures[1]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.4f, 0.4f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2 + 20,
-                                //    720 / 2);
                             }
                             else if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 120 * scrollSpeed)
                             {
                                 score += 25;
-                                //ratingContainer.Add(new Sprite(ratingTextures[2]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.5f, 0.5f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2,
-                                //    720 / 2);
                             }
 
                             playerLane[0].RemoveAt(0);
                             deltaTime.Restart();
                         }
 
-                        var activeTexture = playerLeft;
-                        var index = gameTick % activeTexture.Count;
-
-                        spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
-                        spriteContainer["player"].Texture = activeTexture[index];
+                        currPlayerPos = 0;
 
                         scoreText.DisplayedString = "Score: " + score;
                         scoreText.Position = new Vector2f(1280  / 2 - scoreText.GetLocalBounds().Width / 2, 0);
@@ -317,13 +397,12 @@ namespace FunnyFriday
             }
             else
             {
-                bLeft = false;
                 var activeArrow = arrowLeft[0];
                 arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[0].Texture = activeArrow;
             }
 
-            if (GetAsyncKeyState(0x58))
+            if (Keyboard.IsKeyPressed(Keyboard.Key.X))
             {
                 var activeArrow = arrowDown[1];
                 arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
@@ -332,42 +411,26 @@ namespace FunnyFriday
                 if (playerLane[1].Count > 0)
                     if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 120 * scrollSpeed)
                     {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.15f / scrollSpeed)
+                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f / scrollSpeed)
                         {
                             if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 40 * scrollSpeed)
                             {
                                 score += 100;
-                                //ratingContainer.Add(new Sprite(ratingTextures[0]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.3f, 0.3f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2 + 60,
-                                //    720 / 2);
                             }
                             else if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 80 * scrollSpeed)
                             {
                                 score += 50;
-                                //ratingContainer.Add(new Sprite(ratingTextures[1]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.4f, 0.4f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2 + 20,
-                                //    720 / 2);
                             }
                             else if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 120 * scrollSpeed)
                             {
                                 score += 25;
-                                //ratingContainer.Add(new Sprite(ratingTextures[2]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.5f, 0.5f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2,
-                                //    720 / 2);
                             }
 
                             playerLane[1].RemoveAt(0);
                             deltaTime.Restart();
                         }
 
-                        var activeTexture = playerDown;
-                        var index = gameTick % activeTexture.Count;
-
-                        spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
-                        spriteContainer["player"].Texture = activeTexture[index];
+                        currPlayerPos = 1;
 
                         scoreText.DisplayedString = "Score: " + score;
                         scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
@@ -383,7 +446,7 @@ namespace FunnyFriday
                 arrowContainer[1].Texture = activeArrow;
             }
 
-            if (GetAsyncKeyState(0xBC))
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Comma))
             {
                 var activeArrow = arrowUp[1];
                 arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
@@ -392,43 +455,27 @@ namespace FunnyFriday
                 if (playerLane[2].Count > 0)
                     if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 120 * scrollSpeed )
                     {
-                        if(deltaTime.ElapsedTime.AsSeconds() >= 0.15f / scrollSpeed)
+                        if(deltaTime.ElapsedTime.AsSeconds() >= 0.10f / scrollSpeed)
                         {
                             if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 40 * scrollSpeed)
                             {
                                 score += 100;
-                                //ratingContainer.Add(new Sprite(ratingTextures[0]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.3f, 0.3f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2 + 60,
-                                //    720 / 2);
                             }
                             else if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 80 * scrollSpeed)
                             {
                                 score += 50;
-                                //ratingContainer.Add(new Sprite(ratingTextures[1]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.4f, 0.4f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2 + 20,
-                                //    720 / 2);
                             }
                             else if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 120 * scrollSpeed)
                             {
                                 score += 25;
-                                //ratingContainer.Add(new Sprite(ratingTextures[2]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.5f, 0.5f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2,
-                                //    720 / 2);
                             }
 
                             playerLane[2].RemoveAt(0);
                             deltaTime.Restart();
                         }
-                       
 
-                        var activeTexture = playerUp;
-                        var index = gameTick % activeTexture.Count;
 
-                        spriteContainer["player"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
-                        spriteContainer["player"].Texture = activeTexture[index];
+                        currPlayerPos = 2;
 
                         scoreText.DisplayedString = "Score: " + score;
                         scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
@@ -438,14 +485,13 @@ namespace FunnyFriday
             }
             else
             {
-                bUp = false;
                 var activeArrow = arrowUp[0];
                 arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[2].Texture = activeArrow;
             }
 
 
-            if (GetAsyncKeyState(0xBE))
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Period))
             {
                 var activeArrow = arrowRight[1];
                 arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
@@ -454,36 +500,26 @@ namespace FunnyFriday
                 if (playerLane[3].Count > 0)
                     if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 120 * scrollSpeed)
                     {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.15f / scrollSpeed)
+                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f / scrollSpeed)
                         {
                             if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 40 * scrollSpeed)
                             {
                                 score += 100;
-                                //ratingContainer.Add(new Sprite(ratingTextures[0]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.3f, 0.3f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2 + 60,
-                                //    720 / 2);
                             }
                             else if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 80 * scrollSpeed)
                             {
                                 score += 50;
-                                //ratingContainer.Add(new Sprite(ratingTextures[1]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.4f, 0.4f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2 + 20,
-                                //    720 / 2);
                             }
                             else if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 120 * scrollSpeed)
                             {
                                 score += 25;
-                                //ratingContainer.Add(new Sprite(ratingTextures[2]));
-                                //ratingContainer[ratingContainer.Count - 1].Scale = new Vector2f(0.5f, 0.5f);
-                                //ratingContainer[ratingContainer.Count - 1].Position = new Vector2f(1280 / 2 - ratingContainer[ratingContainer.Count - 1].GetLocalBounds().Width / 2,
-                                //    720 / 2);
                             }
 
                             playerLane[3].RemoveAt(0);
                             deltaTime.Restart();
                         }
+
+                        currPlayerPos = 3;
 
                         scoreText.DisplayedString = "Score: " + score;
                         scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
@@ -492,8 +528,7 @@ namespace FunnyFriday
                     }
             }
             else
-            {
-                bRight = false;
+            { 
                 var activeArrow = arrowRight[0];
                 arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[3].Texture = activeArrow;

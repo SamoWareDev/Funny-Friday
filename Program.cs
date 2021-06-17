@@ -10,6 +10,7 @@ namespace FunnyFriday
 {
     class Program
     {
+
         public static int SCREEN_WIDTH = 1280;
         public static int SCREEN_HEIGTH = 720;
 
@@ -36,10 +37,8 @@ namespace FunnyFriday
                 wnd.DispatchEvents();
                 wnd.Clear(Color.Black);
 
-
-
-                stateMachine.GetActiveStack().InputHandling(stateMachine, ref deltaTime);
                 stateMachine.GetActiveStack().Update(ref deltaTime);
+                stateMachine.GetActiveStack().InputHandling(stateMachine, ref deltaTime);
                 stateMachine.GetActiveStack().Draw();
 
                 wnd.Display();
