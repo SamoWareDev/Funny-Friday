@@ -13,12 +13,14 @@ namespace FunnyFriday
         {
             stateStack.Push(state);
             currentState = stateStack.Peek();
+            GC.Collect();
         }
 
         public void RemoveStack(GameState state)
         {
             stateStack.Pop();
             currentState = stateStack.Peek();
+            GC.Collect();
         }
 
         public void ChangeStack(GameState state)
@@ -26,6 +28,7 @@ namespace FunnyFriday
             stateStack.Pop();
             stateStack.Push(state);
             currentState = stateStack.Peek();
+            GC.Collect();
         }
 
         public GameState GetActiveStack()

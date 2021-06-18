@@ -2,28 +2,19 @@
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using SFML.Audio;
-using System.Text;
-using System.Runtime.InteropServices;
 
 namespace FunnyFriday
 {
 
-    abstract class GameState : IDisposable
+    abstract class GameState
     {
         public abstract void Draw();
 
         public abstract void Update(ref Clock deltaTime);
 
         public abstract void InputHandling(StateMachine stack, ref Clock deltaTime);
-
-        public void Dispose()
-        {
-            GC.Collect();
-        }
     }
 
     class Intro : GameState
@@ -415,7 +406,7 @@ namespace FunnyFriday
 
             for (int i = 0; i < weekInfo.Length; i++)
             {
-                weekContainer.Add(new Sprite(new Texture($"Assets/storymenu/week{i}.png")));
+                weekContainer.Add(new Sprite(new Texture($"Assets/storymenu/week{i + 1}.png")));
                 weekContainer[i].Position = new Vector2f(wnd.Size.X / 2 - weekContainer[i].GetLocalBounds().Width / 2 + (weekContainer[i].GetLocalBounds().Width * i) + 100 * i, 400);
             }
 
@@ -555,6 +546,9 @@ namespace FunnyFriday
                 difficultyChoice++;
                 deltaTime.Restart();
             }
+
+            if(Keyboard.IsKeyPressed(Keyboard.Key.Enter) && deltaTime.ElapsedTime.AsSeconds() >= 0.1f)
+                stack.ChangeStack(new PlayState(wnd, weekChoice, 0, difficultyChoice));
         }
     }
 }

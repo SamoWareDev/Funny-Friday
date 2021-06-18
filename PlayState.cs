@@ -12,15 +12,19 @@ namespace FunnyFriday
         #region Vars
         RenderWindow wnd;
         int gameTick = 0;
-        int nWeek = 0;
-        int nDifficulty = 0;
         float scrollSpeed = 1.5f;
         int score = 0;
         int misses = 0;
 
+        int nWeek = 0;
+        int nDifficulty = 0;
+        int nDay = 0;
+
         Clock animationTime;
         Clock animationTime2;
         Clock musicTime;
+
+        bool bNext = false;
 
         List<Texture> enemyIdle;
         List<Texture> enemyLeft;
@@ -48,12 +52,11 @@ namespace FunnyFriday
         List<List<Sprite>> enemyLane = new List<List<Sprite>>();
         List<List<Sprite>> playerLane = new List<List<Sprite>>();
 
-        List<Texture> ratingTextures = new List<Texture>();
-        List<Sprite> ratingContainer = new List<Sprite>();
 
         int currPlayerPos = -1;
         int currEnemyPos = -1;
 
+        ChartParser chart;
               
         Song currentSong;
 
@@ -68,10 +71,11 @@ namespace FunnyFriday
 
         #endregion
 
-        public PlayState(RenderWindow _wnd, int week, int difficulty)
+        public PlayState(RenderWindow _wnd, int week, int day, int difficulty)
         {
             wnd = _wnd;
             nWeek = week;
+            nDay = day;
             nDifficulty = difficulty;
 
             regularFont = new Font("Assets/Fonts/vcr.ttf");
@@ -107,17 +111,81 @@ namespace FunnyFriday
             spriteContainer["player"].Scale = new Vector2f(0.5f, 0.5f);
             spriteContainer["player"].Position = new Vector2f(900, 400);
 
-            textureManager = new TextureManager("Assets/XML/tricky.xml");
+            switch(week)
+            {
+                case 0:
+                    {
+                        switch (day)
+                        {
+                            case 0:
+                                {
+                                    switch (difficulty)
+                                    {
+                                        case 0:
+                                            chart = new ChartParser("Assets/Music/Improbable Outset/improbable-outset-easy");
+                                            break;
+                                        case 1:
+                                            chart = new ChartParser("Assets/Music/Improbable Outset/improbable-outset");
+                                            break;
+                                        case 2:
+                                            chart = new ChartParser("Assets/Music/Improbable Outset/improbable-outset-hard");
+                                            break;
+                                    }
+                                    instrumental = new Sound(new SoundBuffer("Assets/Music/Improbable Outset/Inst.ogg"));
+                                    voice = new Sound(new SoundBuffer("Assets/Music/Improbable Outset/Voices.ogg"));
 
-            enemyIdle = textureManager.GetTextures(4, 29);
-            enemyLeft = textureManager.GetTextures(67, 103);
-            enemyDown = textureManager.GetTextures(30, 66);
-            enemyUp = textureManager.GetTextures(132, 169);
-            enemyRight = textureManager.GetTextures(104, 131);
+                                    textureManager = new TextureManager("Assets/XML/trickyMask.xml");
 
-            spriteContainer.Add("enemy", new Sprite(enemyIdle[0]));
-            spriteContainer["enemy"].Scale = new Vector2f(0.4f, 0.4f);
-            spriteContainer["enemy"].Position = new Vector2f(150, 300);
+                                    enemyIdle = textureManager.GetTextures(4, 28);
+                                    enemyLeft = textureManager.GetTextures(51, 60);
+                                    enemyDown = textureManager.GetTextures(30, 35);
+                                    enemyUp = textureManager.GetTextures(95, 103);
+                                    enemyRight = textureManager.GetTextures(73, 80);
+
+                                    spriteContainer.Add("enemy", new Sprite(enemyIdle[0]));
+                                    spriteContainer["enemy"].Scale = new Vector2f(0.4f, 0.4f);
+                                    spriteContainer["enemy"].Position = new Vector2f(150, 300);
+                                    bNext = true;
+                                }
+                                break;
+                            case 1:
+                                {
+                                    switch (difficulty)
+                                    {
+                                        case 0:
+                                            chart = new ChartParser("Assets/Music/Madness/madness-easy");
+                                            break;
+                                        case 1:
+                                            chart = new ChartParser("Assets/Music/Madness/madness");
+                                            break;
+                                        case 2:
+                                            chart = new ChartParser("Assets/Music/Madness/madness-hard");
+                                            break;
+                                    }
+
+                                    instrumental = new Sound(new SoundBuffer("Assets/Music/Madness/Inst.ogg"));
+                                    voice = new Sound(new SoundBuffer("Assets/Music/Madness/Voices.ogg"));
+
+                                    textureManager = new TextureManager("Assets/XML/tricky.xml");
+
+                                    enemyIdle = textureManager.GetTextures(4, 29);
+                                    enemyLeft = textureManager.GetTextures(67, 70);
+                                    enemyDown = textureManager.GetTextures(30, 35);
+                                    enemyUp = textureManager.GetTextures(132, 137);
+                                    enemyRight = textureManager.GetTextures(104, 110);
+
+                                    spriteContainer.Add("enemy", new Sprite(enemyIdle[0]));
+                                    spriteContainer["enemy"].Scale = new Vector2f(0.4f, 0.4f);
+                                    spriteContainer["enemy"].Position = new Vector2f(150, 300);
+                                }
+                                break;
+                        }
+                       
+
+                        currentSong = chart.GetSong();
+                    }
+                    break;
+            }
 
             arrowContainer.Add(new Sprite(arrowLeft[0]));
             arrowContainer.Add(new Sprite(arrowDown[0]));
@@ -144,8 +212,6 @@ namespace FunnyFriday
                 playerLane.Add(new List<Sprite>());
             }
 
-            var chart = new ChartParser("madness");
-            currentSong = chart.GetSong();
 
             for (int i = 0; i < currentSong.song.notes.Length; i++)
                 for (int j = 0; j < currentSong.song.notes[i].sectionNotes.Count; j++)
@@ -158,21 +224,19 @@ namespace FunnyFriday
                         if (currentSong.song.notes[i].mustHitSection)
                         {
                             playerLane[lane].Add(new Sprite(noteArray[lane]));
-                            playerLane[lane][playerLane[lane].Count - 1].Position = new Vector2f(arrowContainer[lane].Position.X - 20, (float)yPos * scrollSpeed);
+                            playerLane[lane][playerLane[lane].Count - 1].Position = new Vector2f(arrowContainer[lane].Position.X - 20, (float)(yPos - 4 * i)* scrollSpeed);
                             playerLane[lane][playerLane[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                         }
                         else
                         {
                             enemyLane[lane].Add(new Sprite(noteArray[lane]));
-                            enemyLane[lane][enemyLane[lane].Count - 1].Position = new Vector2f(enemyArrowContainer[lane].Position.X - 20, (float)yPos * scrollSpeed);
+                            enemyLane[lane][enemyLane[lane].Count - 1].Position = new Vector2f(enemyArrowContainer[lane].Position.X - 20, (float)(yPos - 4 * i) * scrollSpeed);
                             enemyLane[lane][enemyLane[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                         }
                     }
                     catch { }
                 }
 
-            instrumental = new Sound(new SoundBuffer("Assets/Music/Bopeebo/Inst.ogg"));
-            voice = new Sound(new SoundBuffer("Assets/Music/Bopeebo/Voices.ogg"));
 
             voice.Play();
             instrumental.Play();
@@ -200,9 +264,6 @@ namespace FunnyFriday
             foreach (var s in playerLane)
                 foreach (var d in s)
                     wnd.Draw(d);
-
-            foreach (var s in ratingContainer)
-                wnd.Draw(s);
 
             wnd.Draw(scoreText);
             wnd.Draw(missText);
@@ -243,11 +304,6 @@ namespace FunnyFriday
             }
             catch { }
 
-            musicTime.Restart();
-        }
-
-        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
-        {
             if (animationTime.ElapsedTime.AsSeconds() >= 0.04f)
             {
                 switch (currPlayerPos)
@@ -320,8 +376,8 @@ namespace FunnyFriday
                             var activeTexture = enemyDown;
                             var index = gameTick % activeTexture.Count;
 
-                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[0].Size.X, (int)activeTexture[0].Size.Y);
-                            spriteContainer["enemy"].Texture = activeTexture[0];
+                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
+                            spriteContainer["enemy"].Texture = activeTexture[index];
                         }
                         break;
                     case 2:
@@ -329,8 +385,8 @@ namespace FunnyFriday
                             var activeTexture = enemyUp;
                             var index = gameTick % activeTexture.Count;
 
-                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[0].Size.X, (int)activeTexture[0].Size.Y);
-                            spriteContainer["enemy"].Texture = activeTexture[0];
+                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
+                            spriteContainer["enemy"].Texture = activeTexture[index];
                         }
                         break;
                     case 3:
@@ -338,8 +394,8 @@ namespace FunnyFriday
                             var activeTexture = enemyRight;
                             var index = gameTick % activeTexture.Count;
 
-                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[0].Size.X, (int)activeTexture[0].Size.Y);
-                            spriteContainer["enemy"].Texture = activeTexture[0];
+                            spriteContainer["enemy"].TextureRect = new IntRect(0, 0, (int)activeTexture[index].Size.X, (int)activeTexture[index].Size.Y);
+                            spriteContainer["enemy"].Texture = activeTexture[index];
                         }
                         break;
                 }
@@ -347,7 +403,7 @@ namespace FunnyFriday
                 gameTick++;
                 animationTime.Restart();
 
-                if (animationTime2.ElapsedTime.AsSeconds() >= 0.01f)
+                if (animationTime2.ElapsedTime.AsSeconds() >= 0.3f)
                 {
                     if (currPlayerPos != -1)
                         currPlayerPos = -1;
@@ -359,6 +415,11 @@ namespace FunnyFriday
                 }
             }
 
+            musicTime.Restart();
+        }
+
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
+        {
             if (Keyboard.IsKeyPressed(Keyboard.Key.Y))
             {
                 var activeArrow = arrowLeft[1];
@@ -366,22 +427,17 @@ namespace FunnyFriday
                 arrowContainer[0].Texture = activeArrow;
 
                 if (playerLane[0].Count > 0)
-                    if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 120 * scrollSpeed)
+                    if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 150 * scrollSpeed)
                     {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f / scrollSpeed)
+                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f)
                         {
                             if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 40 * scrollSpeed)
-                            {
                                 score += 100;
-                            }
                             else if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 80 * scrollSpeed)
-                            {
                                 score += 50;
-                            }
-                            else if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 120 * scrollSpeed)
-                            {
+                            else if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 150 * scrollSpeed)
                                 score += 25;
-                            }
+
 
                             playerLane[0].RemoveAt(0);
                             deltaTime.Restart();
@@ -390,7 +446,7 @@ namespace FunnyFriday
                         currPlayerPos = 0;
 
                         scoreText.DisplayedString = "Score: " + score;
-                        scoreText.Position = new Vector2f(1280  / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+                        scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
 
                         gameTick++;
                     }
@@ -409,9 +465,9 @@ namespace FunnyFriday
                 arrowContainer[1].Texture = activeArrow;
 
                 if (playerLane[1].Count > 0)
-                    if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 120 * scrollSpeed)
+                    if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 150 * scrollSpeed)
                     {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f / scrollSpeed)
+                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f)
                         {
                             if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 40 * scrollSpeed)
                             {
@@ -421,7 +477,7 @@ namespace FunnyFriday
                             {
                                 score += 50;
                             }
-                            else if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 120 * scrollSpeed)
+                            else if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 150 * scrollSpeed)
                             {
                                 score += 25;
                             }
@@ -436,7 +492,7 @@ namespace FunnyFriday
                         scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
 
                         gameTick++;
-                        
+
                     }
             }
             else
@@ -453,9 +509,9 @@ namespace FunnyFriday
                 arrowContainer[2].Texture = activeArrow;
 
                 if (playerLane[2].Count > 0)
-                    if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 120 * scrollSpeed )
+                    if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 150 * scrollSpeed)
                     {
-                        if(deltaTime.ElapsedTime.AsSeconds() >= 0.10f / scrollSpeed)
+                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f)
                         {
                             if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 40 * scrollSpeed)
                             {
@@ -465,7 +521,7 @@ namespace FunnyFriday
                             {
                                 score += 50;
                             }
-                            else if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 120 * scrollSpeed)
+                            else if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 150 * scrollSpeed)
                             {
                                 score += 25;
                             }
@@ -498,9 +554,9 @@ namespace FunnyFriday
                 arrowContainer[3].Texture = activeArrow;
 
                 if (playerLane[3].Count > 0)
-                    if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 120 * scrollSpeed)
+                    if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 150 * scrollSpeed)
                     {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f / scrollSpeed)
+                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f)
                         {
                             if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 40 * scrollSpeed)
                             {
@@ -510,7 +566,7 @@ namespace FunnyFriday
                             {
                                 score += 50;
                             }
-                            else if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 120 * scrollSpeed)
+                            else if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 150 * scrollSpeed)
                             {
                                 score += 25;
                             }
@@ -528,11 +584,17 @@ namespace FunnyFriday
                     }
             }
             else
-            { 
+            {
                 var activeArrow = arrowRight[0];
                 arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
                 arrowContainer[3].Texture = activeArrow;
             }
+
+            if(instrumental.Status == 0 && bNext)
+                stack.ChangeStack(new PlayState(wnd, nWeek, nDay + 1, nDifficulty));
+
+            if (instrumental.Status == 0 && bNext == false && nDay >= 1)
+                stack.ChangeStack(new SelectScreen(wnd));
         }
     }
 }
