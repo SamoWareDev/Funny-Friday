@@ -4,6 +4,7 @@ using SFML.System;
 using SFML.Window;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace FunnyFriday
 {
@@ -12,7 +13,7 @@ namespace FunnyFriday
         #region Vars
         RenderWindow wnd;
         int gameTick = 0;
-        float scrollSpeed = 1.5f;
+        float scrollSpeed = 1.0f;
         int score = 0;
         int misses = 0;
 
@@ -68,6 +69,14 @@ namespace FunnyFriday
         Text missText;
 
         float delta = 0.0f;
+
+        [DllImport("user32.dll")]
+        static extern ushort GetAsyncKeyState(int vKey);
+
+        public static bool IsKeyPushedDown(int vKey)
+        {
+            return 0 != (GetAsyncKeyState((int)vKey) & 0x8000);
+        }
 
         #endregion
 
@@ -420,181 +429,191 @@ namespace FunnyFriday
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Y))
+            try
             {
-                var activeArrow = arrowLeft[1];
-                arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                arrowContainer[0].Texture = activeArrow;
-
-                if (playerLane[0].Count > 0)
-                    if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 150 * scrollSpeed)
+                    if (IsKeyPushedDown(0x59))
                     {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f)
+                        var activeArrow = arrowLeft[1];
+                        arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                        arrowContainer[0].Texture = activeArrow;
+                        foreach (var s in playerLane[0])
+
+                            if (s.Position.Y <= arrowContainer[0].Position.Y + 150 * scrollSpeed)
+                            {
+                                if (deltaTime.ElapsedTime.AsSeconds() >= 0.12f)
+                                {
+                                    if (s.Position.Y <= arrowContainer[0].Position.Y + 40 * scrollSpeed)
+                                        score += 100;
+                                    else if (s.Position.Y <= arrowContainer[0].Position.Y + 80 * scrollSpeed)
+                                        score += 50;
+                                    else if (s.Position.Y <= arrowContainer[0].Position.Y + 150 * scrollSpeed)
+                                        score += 25;
+
+
+                                    playerLane[0].Remove(s);
+                                    deltaTime.Restart();
+                                }
+
+                                currPlayerPos = 0;
+
+                                scoreText.DisplayedString = "Score: " + score;
+                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                                gameTick++;
+                            }
+                    }
+                    else
+                    {
+                        var activeArrow = arrowLeft[0];
+                        arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                        arrowContainer[0].Texture = activeArrow;
+                    }
+
+                    if (IsKeyPushedDown(0x58))
+                    {
+                        var activeArrow = arrowDown[1];
+                        arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                        arrowContainer[1].Texture = activeArrow;
+
+                        foreach (var s in playerLane[1])
                         {
-                            if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 40 * scrollSpeed)
-                                score += 100;
-                            else if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 80 * scrollSpeed)
-                                score += 50;
-                            else if (playerLane[0][0].Position.Y <= arrowContainer[0].Position.Y + 150 * scrollSpeed)
-                                score += 25;
+                            if (s.Position.Y <= arrowContainer[1].Position.Y + 150 * scrollSpeed)
+                            {
+                                if (deltaTime.ElapsedTime.AsSeconds() >= 0.12f)
+                                {
+                                    if (s.Position.Y <= arrowContainer[1].Position.Y + 40 * scrollSpeed)
+                                    {
+                                        score += 100;
+                                    }
+                                    else if (s.Position.Y <= arrowContainer[1].Position.Y + 80 * scrollSpeed)
+                                    {
+                                        score += 50;
+                                    }
+                                    else if (s.Position.Y <= arrowContainer[1].Position.Y + 150 * scrollSpeed)
+                                    {
+                                        score += 25;
+                                    }
+
+                                    playerLane[1].Remove(s);
+                                    deltaTime.Restart();
+                                }
+
+                                currPlayerPos = 1;
+
+                                scoreText.DisplayedString = "Score: " + score;
+                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                                gameTick++;
+
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var activeArrow = arrowDown[0];
+                        arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                        arrowContainer[1].Texture = activeArrow;
+                    }
+
+                    if (IsKeyPushedDown(0xBC))
+                    {
+                        var activeArrow = arrowUp[1];
+                        arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                        arrowContainer[2].Texture = activeArrow;
+
+                        foreach (var s in playerLane[2])
+                        {
+                            if (s.Position.Y <= arrowContainer[2].Position.Y + 150 * scrollSpeed)
+                            {
+                                if (deltaTime.ElapsedTime.AsSeconds() >= 0.12f)
+                                {
+                                    if (s.Position.Y <= arrowContainer[2].Position.Y + 40 * scrollSpeed)
+                                    {
+                                        score += 100;
+                                    }
+                                    else if (s.Position.Y <= arrowContainer[2].Position.Y + 80 * scrollSpeed)
+                                    {
+                                        score += 50;
+                                    }
+                                    else if (s.Position.Y <= arrowContainer[2].Position.Y + 150 * scrollSpeed)
+                                    {
+                                        score += 25;
+                                    }
+
+                                    playerLane[2].Remove(s);
+                                    deltaTime.Restart();
+                                }
 
 
-                            playerLane[0].RemoveAt(0);
-                            deltaTime.Restart();
+                                currPlayerPos = 2;
+
+                                scoreText.DisplayedString = "Score: " + score;
+                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                                gameTick++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var activeArrow = arrowUp[0];
+                        arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                        arrowContainer[2].Texture = activeArrow;
+                    }
+
+                    if (IsKeyPushedDown(0xBE))
+                    {
+                        var activeArrow = arrowRight[1];
+                        arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                        arrowContainer[3].Texture = activeArrow;
+
+                        foreach (var s in playerLane[3])
+                        {
+                            if (s.Position.Y <= arrowContainer[3].Position.Y + 150 * scrollSpeed)
+                            {
+                                if (deltaTime.ElapsedTime.AsSeconds() >= 0.12f)
+                                {
+                                    if (s.Position.Y <= arrowContainer[3].Position.Y + 40 * scrollSpeed)
+                                    {
+                                        score += 100;
+                                    }
+                                    else if (s.Position.Y <= arrowContainer[3].Position.Y + 80 * scrollSpeed)
+                                    {
+                                        score += 50;
+                                    }
+                                    else if (s.Position.Y <= arrowContainer[3].Position.Y + 150 * scrollSpeed)
+                                    {
+                                        score += 25;
+                                    }
+
+                                    playerLane[3].Remove(s);
+                                    deltaTime.Restart();
+                                }
+
+                                currPlayerPos = 3;
+
+                                scoreText.DisplayedString = "Score: " + score;
+                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                                gameTick++;
+                            }
                         }
 
-                        currPlayerPos = 0;
-
-                        scoreText.DisplayedString = "Score: " + score;
-                        scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                        gameTick++;
                     }
-            }
-            else
-            {
-                var activeArrow = arrowLeft[0];
-                arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                arrowContainer[0].Texture = activeArrow;
-            }
-
-            if (Keyboard.IsKeyPressed(Keyboard.Key.X))
-            {
-                var activeArrow = arrowDown[1];
-                arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                arrowContainer[1].Texture = activeArrow;
-
-                if (playerLane[1].Count > 0)
-                    if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 150 * scrollSpeed)
+                    else
                     {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f)
-                        {
-                            if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 40 * scrollSpeed)
-                            {
-                                score += 100;
-                            }
-                            else if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 80 * scrollSpeed)
-                            {
-                                score += 50;
-                            }
-                            else if (playerLane[1][0].Position.Y <= arrowContainer[1].Position.Y + 150 * scrollSpeed)
-                            {
-                                score += 25;
-                            }
-
-                            playerLane[1].RemoveAt(0);
-                            deltaTime.Restart();
-                        }
-
-                        currPlayerPos = 1;
-
-                        scoreText.DisplayedString = "Score: " + score;
-                        scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                        gameTick++;
-
+                        var activeArrow = arrowRight[0];
+                        arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                        arrowContainer[3].Texture = activeArrow;
                     }
             }
-            else
-            {
-                var activeArrow = arrowDown[0];
-                arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                arrowContainer[1].Texture = activeArrow;
+            catch { }
+
+                if (instrumental.Status == 0 && bNext)
+                    stack.ChangeStack(new PlayState(wnd, nWeek, nDay + 1, nDifficulty));
+
+                if (instrumental.Status == 0 && bNext == false && nDay >= 1)
+                    stack.ChangeStack(new SelectScreen(wnd));
             }
-
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Comma))
-            {
-                var activeArrow = arrowUp[1];
-                arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                arrowContainer[2].Texture = activeArrow;
-
-                if (playerLane[2].Count > 0)
-                    if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 150 * scrollSpeed)
-                    {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f)
-                        {
-                            if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 40 * scrollSpeed)
-                            {
-                                score += 100;
-                            }
-                            else if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 80 * scrollSpeed)
-                            {
-                                score += 50;
-                            }
-                            else if (playerLane[2][0].Position.Y <= arrowContainer[2].Position.Y + 150 * scrollSpeed)
-                            {
-                                score += 25;
-                            }
-
-                            playerLane[2].RemoveAt(0);
-                            deltaTime.Restart();
-                        }
-
-
-                        currPlayerPos = 2;
-
-                        scoreText.DisplayedString = "Score: " + score;
-                        scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                        gameTick++;
-                    }
-            }
-            else
-            {
-                var activeArrow = arrowUp[0];
-                arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                arrowContainer[2].Texture = activeArrow;
-            }
-
-
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Period))
-            {
-                var activeArrow = arrowRight[1];
-                arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                arrowContainer[3].Texture = activeArrow;
-
-                if (playerLane[3].Count > 0)
-                    if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 150 * scrollSpeed)
-                    {
-                        if (deltaTime.ElapsedTime.AsSeconds() >= 0.10f)
-                        {
-                            if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 40 * scrollSpeed)
-                            {
-                                score += 100;
-                            }
-                            else if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 80 * scrollSpeed)
-                            {
-                                score += 50;
-                            }
-                            else if (playerLane[3][0].Position.Y <= arrowContainer[3].Position.Y + 150 * scrollSpeed)
-                            {
-                                score += 25;
-                            }
-
-                            playerLane[3].RemoveAt(0);
-                            deltaTime.Restart();
-                        }
-
-                        currPlayerPos = 3;
-
-                        scoreText.DisplayedString = "Score: " + score;
-                        scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                        gameTick++;
-                    }
-            }
-            else
-            {
-                var activeArrow = arrowRight[0];
-                arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                arrowContainer[3].Texture = activeArrow;
-            }
-
-            if(instrumental.Status == 0 && bNext)
-                stack.ChangeStack(new PlayState(wnd, nWeek, nDay + 1, nDifficulty));
-
-            if (instrumental.Status == 0 && bNext == false && nDay >= 1)
-                stack.ChangeStack(new SelectScreen(wnd));
-        }
     }
 }
