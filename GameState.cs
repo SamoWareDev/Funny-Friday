@@ -548,7 +548,7 @@ namespace FunnyFriday
             }
 
             if(Keyboard.IsKeyPressed(Keyboard.Key.Enter) && deltaTime.ElapsedTime.AsSeconds() >= 0.1f)
-                stack.ChangeStack(new PlayState(wnd, weekChoice, 0, difficultyChoice));
+                stack.ChangeStack(new PlayState(wnd, weekChoice, 2, difficultyChoice));
         }
     }
 }

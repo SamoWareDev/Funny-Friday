@@ -29,7 +29,7 @@ namespace FunnyFriday
             wnd.Closed += WindowClosed;
 
             var stateMachine = new StateMachine();
-            stateMachine.AddStack(new Intro(wnd));
+            stateMachine.AddStack(new PlayState(wnd, 0, 2, 2));
 
             while (wnd.IsOpen)
             {

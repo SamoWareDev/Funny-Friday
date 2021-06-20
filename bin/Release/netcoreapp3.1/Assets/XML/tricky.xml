@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TextureAtlas imagePath="Assets/tricky.png">
+<TextureAtlas imagePath="Assets/Tricky/tricky.png">
 	<!-- Created with Adobe Animate version 21.0.3.38773 -->
 	<!-- http://www.adobe.com/products/animate.html -->
 	<SubTexture name="Idle0000" x="5" y="5" width="619" height="649" frameX="-14" frameY="-36" frameWidth="665" frameHeight="685"/>

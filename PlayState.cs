@@ -4,6 +4,7 @@ using SFML.System;
 using SFML.Window;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace FunnyFriday
@@ -13,7 +14,7 @@ namespace FunnyFriday
         #region Vars
         RenderWindow wnd;
         int gameTick = 0;
-        float scrollSpeed = 1.0f;
+        float scrollSpeed = 1.5f;
         int score = 0;
         int misses = 0;
 
@@ -53,9 +54,20 @@ namespace FunnyFriday
         List<List<Sprite>> enemyLane = new List<List<Sprite>>();
         List<List<Sprite>> playerLane = new List<List<Sprite>>();
 
+        List<List<Sprite>> lanes = new List<List<Sprite>>();
+
+        bool bLeft = false;
+        bool bDown = false;
+        bool bUp = false;
+        bool bRight = false;
 
         int currPlayerPos = -1;
         int currEnemyPos = -1;
+
+        bool bFocusPlayer = false;
+        bool bFocusEnemy = true;
+        Vector2f vPlayer;
+        Vector2f vEnemy;
 
         ChartParser chart;
               
@@ -78,6 +90,8 @@ namespace FunnyFriday
             return 0 != (GetAsyncKeyState((int)vKey) & 0x8000);
         }
 
+        View view;
+
         #endregion
 
         public PlayState(RenderWindow _wnd, int week, int day, int difficulty)
@@ -87,6 +101,9 @@ namespace FunnyFriday
             nDay = day;
             nDifficulty = difficulty;
 
+            view = new View(new FloatRect(0, 0, 1280, 720));
+            view.Zoom(0.9f);
+
             regularFont = new Font("Assets/Fonts/vcr.ttf");
             scoreText = new Text("Score: " + score, regularFont);
             scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
@@ -94,10 +111,9 @@ namespace FunnyFriday
             missText = new Text("Miss: " + score, regularFont);
             missText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, missText.GetLocalBounds().Height);
 
-            spriteContainer.Add("backcock", new Sprite(new Texture("Assets/red.png")));
-            spriteContainer.Add("background", new Sprite(new Texture("Assets/island.png")));
-            spriteContainer["background"].Scale = new Vector2f(0.65f, 0.65f);
-            spriteContainer["background"].Position = new Vector2f(-600.0f, -200.0f);
+            spriteContainer.Add("red", new Sprite(new Texture("Assets/Tricky/red.png")));
+            spriteContainer["red"].Position = new Vector2f(-500, -500);
+            
 
             var textureManager = new TextureManager("Assets/XML/Notes.xml");
 
@@ -108,18 +124,6 @@ namespace FunnyFriday
 
             noteArray = textureManager.GetTextures(new string[] { "left confirm0003", "down confirm0003", "up confirm0003", "right confirm0003" });
 
-            textureManager = new TextureManager("Assets/XML/Boyfriend.xml");
-
-            playerIdle = textureManager.GetTextures(430, 443);
-            playerLeft = textureManager.GetTextures(157, 171);
-            playerDown = textureManager.GetTextures(98, 127);
-            playerUp = textureManager.GetTextures(314, 328);
-            playerRight = textureManager.GetTextures(206, 267);
-
-            spriteContainer.Add("player", new Sprite(playerIdle[0]));
-            spriteContainer["player"].Scale = new Vector2f(0.5f, 0.5f);
-            spriteContainer["player"].Position = new Vector2f(900, 400);
-
             switch(week)
             {
                 case 0:
@@ -128,6 +132,10 @@ namespace FunnyFriday
                         {
                             case 0:
                                 {
+                                    spriteContainer.Add("background", new Sprite(new Texture("Assets/Tricky/island.png")));
+                                    spriteContainer["background"].Scale = new Vector2f(0.65f, 0.65f);
+                                    spriteContainer["background"].Position = new Vector2f(-600.0f, -200.0f);
+
                                     switch (difficulty)
                                     {
                                         case 0:
@@ -159,6 +167,10 @@ namespace FunnyFriday
                                 break;
                             case 1:
                                 {
+                                    spriteContainer.Add("background", new Sprite(new Texture("Assets/Tricky/island.png")));
+                                    spriteContainer["background"].Scale = new Vector2f(0.65f, 0.65f);
+                                    spriteContainer["background"].Position = new Vector2f(-600.0f, -200.0f);
+
                                     switch (difficulty)
                                     {
                                         case 0:
@@ -186,6 +198,72 @@ namespace FunnyFriday
                                     spriteContainer.Add("enemy", new Sprite(enemyIdle[0]));
                                     spriteContainer["enemy"].Scale = new Vector2f(0.4f, 0.4f);
                                     spriteContainer["enemy"].Position = new Vector2f(150, 300);
+
+                                    bNext = true;
+                                }
+                                break;
+
+                            case 2:
+                                {
+                                    spriteContainer.Add("background", new Sprite(new Texture("Assets/Tricky/island.png")));
+                                    spriteContainer["background"].Scale = new Vector2f(0.65f, 0.65f);
+                                    spriteContainer["background"].Position = new Vector2f(-600.0f, -200.0f);
+
+                                    switch (difficulty)
+                                    {
+                                        case 0:
+                                            chart = new ChartParser("Assets/Music/Hell Clown/hellclown-easy");
+                                            break;
+                                        case 1:
+                                            chart = new ChartParser("Assets/Music/Hell Clown/hellclown");
+                                            break;
+                                        case 2:
+                                            chart = new ChartParser("Assets/Music/Hell Clown/hellclown-hard");
+                                            bNext = true;
+                                            break;
+                                    }
+
+                                    instrumental = new Sound(new SoundBuffer("Assets/Music/Hell Clown/Inst.ogg"));
+                                    voice = new Sound(new SoundBuffer("Assets/Music/Hell Clown/Voices.ogg"));
+
+                                    textureManager = new TextureManager("Assets/XML/tricky.xml");
+
+                                    enemyIdle = textureManager.GetTextures(4, 29);
+                                    enemyLeft = textureManager.GetTextures(67, 70);
+                                    enemyDown = textureManager.GetTextures(30, 35);
+                                    enemyUp = textureManager.GetTextures(132, 137);
+                                    enemyRight = textureManager.GetTextures(104, 110);
+
+                                    spriteContainer.Add("enemy", new Sprite(enemyIdle[0]));
+                                    spriteContainer["enemy"].Scale = new Vector2f(0.4f, 0.4f);
+                                    spriteContainer["enemy"].Position = new Vector2f(150, 300);
+                                }
+                                break;
+
+                            case 3:
+                                {
+                                    spriteContainer.Add("background", new Sprite(new Texture("Assets/Tricky/daBackground.png")));
+                                    spriteContainer["background"].Scale = new Vector2f(0.8f, 0.8f);
+                                    spriteContainer["background"].Position = new Vector2f(-500.0f, -250);
+                                    
+
+                                    chart = new ChartParser("Assets/Music/Expurgation/expurgation-hard");
+
+                                    instrumental = new Sound(new SoundBuffer("Assets/Music/Expurgation/Inst.ogg"));
+                                    voice = new Sound(new SoundBuffer("Assets/Music/Expurgation/Voices.ogg"));
+
+                                    textureManager = new TextureManager("Assets/XML/EXCLOWN.xml");
+
+                                    enemyIdle = textureManager.GetTextures(4, 38);
+                                    enemyLeft = textureManager.GetTextures(48, 54);
+                                    enemyDown = textureManager.GetTextures(39, 46);
+                                    enemyUp = textureManager.GetTextures(63, 70);
+                                    enemyRight = textureManager.GetTextures(55, 62);
+
+                                    spriteContainer.Add("enemy", new Sprite(enemyIdle[0]));
+                                    spriteContainer["enemy"].Scale = new Vector2f(0.4f, 0.4f);
+                                    spriteContainer["enemy"].Position = new Vector2f(150, 300);
+
                                 }
                                 break;
                         }
@@ -195,6 +273,21 @@ namespace FunnyFriday
                     }
                     break;
             }
+
+            textureManager = new TextureManager("Assets/XML/Boyfriend.xml");
+
+            playerIdle = textureManager.GetTextures(430, 443);
+            playerLeft = textureManager.GetTextures(157, 161);
+            playerDown = textureManager.GetTextures(98, 102);
+            playerUp = textureManager.GetTextures(314, 318);
+            playerRight = textureManager.GetTextures(206, 210);
+
+            spriteContainer.Add("player", new Sprite(playerIdle[0]));
+            spriteContainer["player"].Scale = new Vector2f(0.5f, 0.5f);
+            spriteContainer["player"].Position = new Vector2f(900, 400);
+
+            vPlayer = new Vector2f(spriteContainer["player"].Position.X, spriteContainer["player"].Position.Y);
+            vEnemy = new Vector2f(spriteContainer["enemy"].Position.X + spriteContainer["enemy"].GetLocalBounds().Width / 2, spriteContainer["enemy"].Position.Y);
 
             arrowContainer.Add(new Sprite(arrowLeft[0]));
             arrowContainer.Add(new Sprite(arrowDown[0]));
@@ -221,31 +314,65 @@ namespace FunnyFriday
                 playerLane.Add(new List<Sprite>());
             }
 
+            for (int i = 0; i < 8; i++)
+                lanes.Add(new List<Sprite>());
 
-            for (int i = 0; i < currentSong.song.notes.Length; i++)
-                for (int j = 0; j < currentSong.song.notes[i].sectionNotes.Count; j++)
+            for(int i = 0; i < currentSong.song.notes.Length; i++)
+                for(int j = 0; j < currentSong.song.notes[i].sectionNotes.Count; j++)
                 {
-                    double yPos = currentSong.song.notes[i].sectionNotes[j][0];
-                    int lane = Convert.ToInt32(currentSong.song.notes[i].sectionNotes[j][1]);
-                    double length = currentSong.song.notes[i].sectionNotes[j][2];
                     try
                     {
-                        if (currentSong.song.notes[i].mustHitSection)
+                        double yPos = currentSong.song.notes[i].sectionNotes[j][0];
+                        int lane = Convert.ToInt32(currentSong.song.notes[i].sectionNotes[j][1]);
+
+                        if(currentSong.song.notes[i].mustHitSection)
                         {
-                            playerLane[lane].Add(new Sprite(noteArray[lane]));
-                            playerLane[lane][playerLane[lane].Count - 1].Position = new Vector2f(arrowContainer[lane].Position.X - 20, (float)(yPos - 4 * i)* scrollSpeed);
-                            playerLane[lane][playerLane[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
+                            if (lane <= 3)
+                            {
+                                lanes[lane + 4].Add(new Sprite(noteArray[lane]));
+                                lanes[lane + 4][lanes[lane + 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 7 * i) * scrollSpeed);
+                                lanes[lane + 4][lanes[lane + 4].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
+                            }
+                            if (lane >= 4)
+                            {
+                                lanes[lane - 4].Add(new Sprite(noteArray[lane - 4]));
+                                lanes[lane - 4][lanes[lane - 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 7 * i) * scrollSpeed);
+                                lanes[lane - 4][lanes[lane - 4].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
+                            }
                         }
                         else
                         {
-                            enemyLane[lane].Add(new Sprite(noteArray[lane]));
-                            enemyLane[lane][enemyLane[lane].Count - 1].Position = new Vector2f(enemyArrowContainer[lane].Position.X - 20, (float)(yPos - 4 * i) * scrollSpeed);
-                            enemyLane[lane][enemyLane[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
-                        }
+                            if (lane <= 3)
+                            {
+                                lanes[lane].Add(new Sprite(noteArray[lane]));
+                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 7 * i) * scrollSpeed);
+                                lanes[lane][lanes[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
+                            }
+                            if(lane >= 4)
+                            {
+                                lanes[lane].Add(new Sprite(noteArray[lane - 4]));
+                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 7 * i) * scrollSpeed);
+                                lanes[lane][lanes[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
+                            }
+                        } 
                     }
                     catch { }
                 }
 
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < lanes[i].Count; j++)
+                {
+                    lanes[i][j].Position = new Vector2f(enemyArrowContainer[i].Position.X - 20, lanes[i][j].Position.Y);
+                    enemyLane[i].Add(lanes[i][j]);
+                }
+
+
+            for (int i = 4; i < 8; i++)
+                for (int j = 0; j < lanes[i].Count; j++)
+                {
+                    lanes[i][j].Position = new Vector2f(arrowContainer[i - 4].Position.X - 20, lanes[i][j].Position.Y);
+                    playerLane[i - 4].Add(lanes[i][j]);
+                }
 
             voice.Play();
             instrumental.Play();
@@ -257,8 +384,12 @@ namespace FunnyFriday
 
         public override void Draw()
         {
+            wnd.SetView(view);
+
             foreach (var s in spriteContainer)
                 wnd.Draw(s.Value);
+
+            wnd.SetView(wnd.DefaultView);
 
             foreach (var s in arrowContainer)
                 wnd.Draw(s);
@@ -278,9 +409,18 @@ namespace FunnyFriday
             wnd.Draw(missText);
         }
 
+        public void LerpTo(Vector2f pos, ref bool b)
+        {
+            if (view.Center != pos)
+                view.Center = new Vector2f(view.Center.X + (pos.X - view.Center.X) / 20, view.Center.Y + (pos.Y - view.Center.Y) / 20);
+
+            if (Math.Sqrt(Math.Pow(pos.X - view.Center.X, 2) + Math.Pow(pos.Y - view.Center.Y, 2)) <= 0.01f)
+                b = false;
+        }
+
         public override void Update(ref Clock deltaTime)
         {
-            delta = musicTime.ElapsedTime.AsSeconds() * 1000.0f * (float)scrollSpeed;
+            delta = musicTime.ElapsedTime.AsSeconds() * 1000.0f * scrollSpeed;
 
             try
             {
@@ -412,16 +552,35 @@ namespace FunnyFriday
                 gameTick++;
                 animationTime.Restart();
 
-                if (animationTime2.ElapsedTime.AsSeconds() >= 0.3f)
+                if (animationTime2.ElapsedTime.AsSeconds() >= 0.5f)
                 {
                     if (currPlayerPos != -1)
                         currPlayerPos = -1;
 
                     if (currEnemyPos != -1)
                         currEnemyPos = -1;
-
                     animationTime2.Restart();
                 }
+            }
+
+            if (bFocusPlayer && !bFocusEnemy)
+                LerpTo(vPlayer, ref bFocusPlayer);
+
+            if (bFocusEnemy && !bFocusPlayer)
+                LerpTo(vEnemy, ref bFocusEnemy);
+
+            if (bFocusPlayer && bFocusEnemy)
+                bFocusEnemy = false;
+
+            for (int i = 0; i < playerLane.Count; i++)
+            {
+                if (playerLane[i].Count > 0)
+                    if (playerLane[i][0].Position.Y <= arrowContainer[i].Position.Y + 100)
+                        bFocusPlayer = true;
+
+                if (enemyLane[i].Count > 0)
+                    if (enemyLane[i][0].Position.Y <= arrowContainer[i].Position.Y)
+                        bFocusEnemy = true;
             }
 
             musicTime.Restart();
@@ -429,183 +588,175 @@ namespace FunnyFriday
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
+
             try
             {
-                    if (IsKeyPushedDown(0x59))
-                    {
-                        var activeArrow = arrowLeft[1];
-                        arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                        arrowContainer[0].Texture = activeArrow;
-                        foreach (var s in playerLane[0])
+                if (IsKeyPushedDown(0x59))
+                {
+                    var activeArrow = arrowLeft[1];
+                    arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                    arrowContainer[0].Texture = activeArrow;
+                    foreach (var s in playerLane[0])
 
-                            if (s.Position.Y <= arrowContainer[0].Position.Y + 150 * scrollSpeed)
-                            {
-                                if (deltaTime.ElapsedTime.AsSeconds() >= 0.12f)
-                                {
-                                    if (s.Position.Y <= arrowContainer[0].Position.Y + 40 * scrollSpeed)
-                                        score += 100;
-                                    else if (s.Position.Y <= arrowContainer[0].Position.Y + 80 * scrollSpeed)
-                                        score += 50;
-                                    else if (s.Position.Y <= arrowContainer[0].Position.Y + 150 * scrollSpeed)
-                                        score += 25;
-
-
-                                    playerLane[0].Remove(s);
-                                    deltaTime.Restart();
-                                }
-
-                                currPlayerPos = 0;
-
-                                scoreText.DisplayedString = "Score: " + score;
-                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                                gameTick++;
-                            }
-                    }
-                    else
-                    {
-                        var activeArrow = arrowLeft[0];
-                        arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                        arrowContainer[0].Texture = activeArrow;
-                    }
-
-                    if (IsKeyPushedDown(0x58))
-                    {
-                        var activeArrow = arrowDown[1];
-                        arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                        arrowContainer[1].Texture = activeArrow;
-
-                        foreach (var s in playerLane[1])
+                        if (s.Position.Y <= arrowContainer[0].Position.Y + 100 * scrollSpeed && !bLeft)
                         {
-                            if (s.Position.Y <= arrowContainer[1].Position.Y + 150 * scrollSpeed)
+                            bLeft = true;
+
+                            if (s.Position.Y <= arrowContainer[0].Position.Y + 25 * scrollSpeed)
+                                score += 100;
+                            else if (s.Position.Y <= arrowContainer[0].Position.Y + 50 * scrollSpeed)
+                                score += 50;
+                            else if (s.Position.Y <= arrowContainer[0].Position.Y + 100 * scrollSpeed)
+                                score += 25;
+
+                            playerLane[0].Remove(s);
+
+                            currPlayerPos = 0;
+
+                            scoreText.DisplayedString = "Score: " + score;
+                            scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                            gameTick++;
+                        }
+                }
+                else
+                {
+                    bLeft = false;
+                    var activeArrow = arrowLeft[0];
+                    arrowContainer[0].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                    arrowContainer[0].Texture = activeArrow;
+                }
+
+                if (IsKeyPushedDown(0x58))
+                {
+                    var activeArrow = arrowDown[1];
+                    arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                    arrowContainer[1].Texture = activeArrow;
+
+                    foreach (var s in playerLane[1])
+                    {
+                        if (s.Position.Y <= arrowContainer[1].Position.Y + 100 * scrollSpeed && !bDown)
+                        {
+                            bDown = true;
+                            if (s.Position.Y <= arrowContainer[1].Position.Y + 25 * scrollSpeed)
                             {
-                                if (deltaTime.ElapsedTime.AsSeconds() >= 0.12f)
-                                {
-                                    if (s.Position.Y <= arrowContainer[1].Position.Y + 40 * scrollSpeed)
-                                    {
-                                        score += 100;
-                                    }
-                                    else if (s.Position.Y <= arrowContainer[1].Position.Y + 80 * scrollSpeed)
-                                    {
-                                        score += 50;
-                                    }
-                                    else if (s.Position.Y <= arrowContainer[1].Position.Y + 150 * scrollSpeed)
-                                    {
-                                        score += 25;
-                                    }
-
-                                    playerLane[1].Remove(s);
-                                    deltaTime.Restart();
-                                }
-
-                                currPlayerPos = 1;
-
-                                scoreText.DisplayedString = "Score: " + score;
-                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                                gameTick++;
-
+                                score += 100;
                             }
+                            else if (s.Position.Y <= arrowContainer[1].Position.Y + 50 * scrollSpeed)
+                            {
+                                score += 50;
+                            }
+                            else if (s.Position.Y <= arrowContainer[1].Position.Y + 100 * scrollSpeed)
+                            {
+                                score += 25;
+                            }
+
+                            playerLane[1].Remove(s);
+
+                            currPlayerPos = 1;
+
+                            scoreText.DisplayedString = "Score: " + score;
+                            scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                            gameTick++;
+
                         }
                     }
-                    else
-                    {
-                        var activeArrow = arrowDown[0];
-                        arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                        arrowContainer[1].Texture = activeArrow;
-                    }
+                }
+                else
+                {
+                    bDown = false;
+                    var activeArrow = arrowDown[0];
+                    arrowContainer[1].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                    arrowContainer[1].Texture = activeArrow;
+                }
 
-                    if (IsKeyPushedDown(0xBC))
-                    {
-                        var activeArrow = arrowUp[1];
-                        arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                        arrowContainer[2].Texture = activeArrow;
+                if (IsKeyPushedDown(0xBC))
+                {
+                    var activeArrow = arrowUp[1];
+                    arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                    arrowContainer[2].Texture = activeArrow;
 
-                        foreach (var s in playerLane[2])
+                    foreach (var s in playerLane[2])
+                    {
+                        if (s.Position.Y <= arrowContainer[2].Position.Y + 100 * scrollSpeed && !bUp)
                         {
-                            if (s.Position.Y <= arrowContainer[2].Position.Y + 150 * scrollSpeed)
+                            bUp = true;
+                            if (s.Position.Y <= arrowContainer[2].Position.Y + 25 * scrollSpeed)
                             {
-                                if (deltaTime.ElapsedTime.AsSeconds() >= 0.12f)
-                                {
-                                    if (s.Position.Y <= arrowContainer[2].Position.Y + 40 * scrollSpeed)
-                                    {
-                                        score += 100;
-                                    }
-                                    else if (s.Position.Y <= arrowContainer[2].Position.Y + 80 * scrollSpeed)
-                                    {
-                                        score += 50;
-                                    }
-                                    else if (s.Position.Y <= arrowContainer[2].Position.Y + 150 * scrollSpeed)
-                                    {
-                                        score += 25;
-                                    }
-
-                                    playerLane[2].Remove(s);
-                                    deltaTime.Restart();
-                                }
-
-
-                                currPlayerPos = 2;
-
-                                scoreText.DisplayedString = "Score: " + score;
-                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                                gameTick++;
+                                score += 100;
                             }
+                            else if (s.Position.Y <= arrowContainer[2].Position.Y + 50 * scrollSpeed)
+                            {
+                                score += 50;
+                            }
+                            else if (s.Position.Y <= arrowContainer[2].Position.Y + 100 * scrollSpeed)
+                            {
+                                score += 25;
+                            }
+
+                            playerLane[2].Remove(s);
+
+                            currPlayerPos = 2;
+
+                            scoreText.DisplayedString = "Score: " + score;
+                            scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                            gameTick++;
                         }
                     }
-                    else
-                    {
-                        var activeArrow = arrowUp[0];
-                        arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                        arrowContainer[2].Texture = activeArrow;
-                    }
+                }
+                else
+                {
+                    bUp = false;
+                    var activeArrow = arrowUp[0];
+                    arrowContainer[2].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                    arrowContainer[2].Texture = activeArrow;
+                }
 
-                    if (IsKeyPushedDown(0xBE))
-                    {
-                        var activeArrow = arrowRight[1];
-                        arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                        arrowContainer[3].Texture = activeArrow;
+                if (IsKeyPushedDown(0xBE))
+                {
+                    var activeArrow = arrowRight[1];
+                    arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                    arrowContainer[3].Texture = activeArrow;
 
-                        foreach (var s in playerLane[3])
+                    foreach (var s in playerLane[3])
+                    {
+                        if (s.Position.Y <= arrowContainer[3].Position.Y + 100 * scrollSpeed && !bRight)
                         {
-                            if (s.Position.Y <= arrowContainer[3].Position.Y + 150 * scrollSpeed)
+                            bRight = true;
+                            if (s.Position.Y <= arrowContainer[3].Position.Y + 25 * scrollSpeed)
                             {
-                                if (deltaTime.ElapsedTime.AsSeconds() >= 0.12f)
-                                {
-                                    if (s.Position.Y <= arrowContainer[3].Position.Y + 40 * scrollSpeed)
-                                    {
-                                        score += 100;
-                                    }
-                                    else if (s.Position.Y <= arrowContainer[3].Position.Y + 80 * scrollSpeed)
-                                    {
-                                        score += 50;
-                                    }
-                                    else if (s.Position.Y <= arrowContainer[3].Position.Y + 150 * scrollSpeed)
-                                    {
-                                        score += 25;
-                                    }
-
-                                    playerLane[3].Remove(s);
-                                    deltaTime.Restart();
-                                }
-
-                                currPlayerPos = 3;
-
-                                scoreText.DisplayedString = "Score: " + score;
-                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                                gameTick++;
+                                score += 100;
                             }
-                        }
+                            else if (s.Position.Y <= arrowContainer[3].Position.Y + 50 * scrollSpeed)
+                            {
+                                score += 50;
+                            }
+                            else if (s.Position.Y <= arrowContainer[3].Position.Y + 100 * scrollSpeed)
+                            {
+                                score += 25;
+                            }
 
+                            playerLane[3].Remove(s);
+
+                            currPlayerPos = 3;
+
+                            scoreText.DisplayedString = "Score: " + score;
+                            scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                            gameTick++;
+                        }
                     }
-                    else
-                    {
-                        var activeArrow = arrowRight[0];
-                        arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
-                        arrowContainer[3].Texture = activeArrow;
-                    }
+
+                }
+                else
+                {
+                    bRight = false;
+                    var activeArrow = arrowRight[0];
+                    arrowContainer[3].TextureRect = new IntRect(0, 0, (int)activeArrow.Size.X, (int)activeArrow.Size.Y);
+                    arrowContainer[3].Texture = activeArrow;
+                }
             }
             catch { }
 
