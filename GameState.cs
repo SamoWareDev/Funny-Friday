@@ -2,6 +2,7 @@
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -15,6 +16,10 @@ namespace FunnyFriday
         public abstract void Update(ref Clock deltaTime);
 
         public abstract void InputHandling(StateMachine stack, ref Clock deltaTime);
+
+        public int[] keys = new int[4];
+        public float scrollSpeed = 1.0f;
+        public Sound menuMusic = new Sound(new SoundBuffer("Assets/Music/freakyMenu.ogg"));
     }
 
     class Intro : GameState
@@ -45,6 +50,8 @@ namespace FunnyFriday
             secondText.DisplayedString = "";
             secondText.Position = new Vector2f(wnd.Size.X / 2 - secondText.GetLocalBounds().Width / 2,
                 wnd.Size.Y / 2 - secondText.GetLocalBounds().Height / 2 - 50);
+
+            menuMusic.Play();
         }
 
         public override void Update(ref Clock deltaTime)
@@ -147,6 +154,9 @@ namespace FunnyFriday
 
             flash = new RectangleShape(new Vector2f(wnd.Size.X, wnd.Size.Y));
             flash.FillColor = new Color(255, 255, 255, 255);
+
+            if (menuMusic.Status == 0)
+                menuMusic.Play();
         }
 
         override public void Draw()
@@ -265,6 +275,9 @@ namespace FunnyFriday
 
             spriteContainer.Add("options", new Sprite(optionsWhite[0]));
             spriteContainer["options"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
+
+            if (menuMusic.Status == 0)
+                menuMusic.Play();
         }
 
         public override void Update(ref Clock deltaTime)
@@ -549,6 +562,154 @@ namespace FunnyFriday
 
             if(Keyboard.IsKeyPressed(Keyboard.Key.Enter) && deltaTime.ElapsedTime.AsSeconds() >= 0.1f)
                 stack.ChangeStack(new PlayState(wnd, weekChoice, 2, difficultyChoice));
+        }
+
+        
+    }
+
+    class Options : GameState
+    {
+        Dictionary<string, Sprite> spriteContainer = new Dictionary<string, Sprite>();
+        RenderWindow wnd;
+        List<Text> keyText = new List<Text>();
+
+        Keyboard.Key[] key = new Keyboard.Key[4];
+        Text scrollText;
+        string[] options;
+
+        bool bChange = false;
+
+        int nChoice = 0;
+        float scrollSpeed = 1.0f;
+
+        public Options(RenderWindow _wnd)
+        {
+            wnd = _wnd;
+            spriteContainer.Add("background", new Sprite(new Texture("Assets/menuDesat.png")));
+
+            key[0] = Keyboard.Key.Left;
+            key[1] = Keyboard.Key.Down;
+            key[1] = Keyboard.Key.Up;
+            key[1] = Keyboard.Key.Right;
+
+            keyText.Add(new Text("Left: " + key[0].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
+            keyText.Add(new Text("Down: " + key[1].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
+            keyText.Add(new Text("Up: " + key[2].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
+            keyText.Add(new Text("Left: " + key[3].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
+
+            for (int i = 0; i < 4; i++)
+            {
+                keyText[i].Position = new Vector2f(200, 100 + 100 * i);
+                keyText[i].FillColor = Color.White;
+                keyText[i].OutlineThickness = 10.0f;
+            }
+
+            scrollText = new Text("Scroll Speed: " + scrollSpeed, new Font("Assets/Fonts/komika-display.regular.ttf"));
+
+            scrollText.Position = new Vector2f(200, 100 + 400);
+            scrollText.FillColor = Color.White;
+            scrollText.OutlineThickness = 10.0f;
+
+        }
+
+        public override void Draw()
+        {
+            foreach (var s in spriteContainer.Values)
+                wnd.Draw(s);
+
+            foreach (var s in keyText)
+                wnd.Draw(s);
+            wnd.Draw(scrollText);
+        }
+
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
+        {
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
+                stack.ChangeStack(new SelectScreen(wnd));
+
+            foreach (int value in Enum.GetValues(typeof(Keyboard.Key)))
+            {
+                if (Keyboard.IsKeyPressed((Keyboard.Key)value))
+                    switch (nChoice)
+                    {
+                        case 0:
+                            if (key[1] != (Keyboard.Key)value && key[2] != (Keyboard.Key)value && key[3] != (Keyboard.Key)value)
+                            {
+                                keyText[0].DisplayedString = "Left: " + ((Keyboard.Key)value).ToString();
+                                key[0] = (Keyboard.Key)value;
+                            }
+                            bChange = false;
+                            break;
+
+                        case 1:
+                            if (key[0] != (Keyboard.Key)value && key[2] != (Keyboard.Key)value && key[3] != (Keyboard.Key)value)
+                            {
+                                keyText[1].DisplayedString = "Down: " + ((Keyboard.Key)value).ToString();
+                                key[1] = (Keyboard.Key)value;
+                            }
+                            bChange = false;
+                            break;
+                        case 2:
+                            if (key[0] != (Keyboard.Key)value && key[1] != (Keyboard.Key)value && key[3] != (Keyboard.Key)value)
+                                keyText[2].DisplayedString = "Up: " + ((Keyboard.Key)value).ToString();
+                            bChange = false;
+                            break;
+                        case 3:
+                            if (key[0] != (Keyboard.Key)value && key[1] != (Keyboard.Key)value && key[2] != (Keyboard.Key)value)
+                                keyText[3].DisplayedString = "Left: " + ((Keyboard.Key)value).ToString();
+                            bChange = false;
+                            break;
+                    }
+            }
+
+            if(Keyboard.IsKeyPressed(Keyboard.Key.Enter) && deltaTime.ElapsedTime.AsSeconds() >= 0.3f)
+            {
+                bChange = true;
+                deltaTime.Restart();
+            }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Down) && nChoice < 4 && deltaTime.ElapsedTime.AsSeconds() >= 0.3)
+            {
+                nChoice++;
+                deltaTime.Restart();
+            }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Up) && nChoice > 0 && deltaTime.ElapsedTime.AsSeconds() >= 0.3)
+            {
+                nChoice--;
+                deltaTime.Restart();
+            }
+
+            if (nChoice == 4 && Keyboard.IsKeyPressed(Keyboard.Key.Right) && deltaTime.ElapsedTime.AsSeconds() >= 0.3 && scrollSpeed <= 5.0f)
+            {
+                scrollSpeed += 0.10f;
+                deltaTime.Restart();
+            }
+
+            if (nChoice == 4 && Keyboard.IsKeyPressed(Keyboard.Key.Left) && deltaTime.ElapsedTime.AsSeconds() >= 0.3 && scrollSpeed >= 0.10f)
+            {
+                scrollSpeed -= 0.10f;
+                deltaTime.Restart();
+            }
+        }
+
+        public override void Update(ref Clock deltaTime)
+        {
+            Console.WriteLine(scrollSpeed);
+
+            foreach (var s in keyText)
+                s.Scale = new Vector2f(1.0f, 1.0f);
+
+            if (nChoice < 4)
+                keyText[nChoice].Scale = new Vector2f(1.5f, 1.5f);
+
+            if (nChoice == 4)
+            {
+                scrollText.Scale = new Vector2f(1.5f, 1.5f);
+                scrollText.DisplayedString = "Scroll Speed: " + (float)Math.Round(scrollSpeed, 2);
+            }
+            else
+                scrollText.Scale = new Vector2f(1.0f, 1.0f);
         }
     }
 }

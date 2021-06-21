@@ -101,6 +101,8 @@ namespace FunnyFriday
             nDay = day;
             nDifficulty = difficulty;
 
+            menuMusic.Stop();
+
             view = new View(new FloatRect(0, 0, 1280, 720));
             view.Zoom(0.9f);
 
@@ -575,7 +577,7 @@ namespace FunnyFriday
             for (int i = 0; i < playerLane.Count; i++)
             {
                 if (playerLane[i].Count > 0)
-                    if (playerLane[i][0].Position.Y <= arrowContainer[i].Position.Y + 100)
+                    if (playerLane[i][0].Position.Y <= arrowContainer[i].Position.Y + 1000)
                         bFocusPlayer = true;
 
                 if (enemyLane[i].Count > 0)

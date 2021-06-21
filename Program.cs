@@ -29,17 +29,18 @@ namespace FunnyFriday
             wnd.Closed += WindowClosed;
 
             var stateMachine = new StateMachine();
-            stateMachine.AddStack(new PlayState(wnd, 0, 2, 2));
-
+            stateMachine.AddStack(new Options(wnd));
+            Console.WriteLine(Convert.ToChar(88));
             while (wnd.IsOpen)
             {
-                
                 wnd.DispatchEvents();
                 wnd.Clear(Color.Black);
 
-                stateMachine.GetActiveStack().Update(ref deltaTime);
+                
+
                 stateMachine.GetActiveStack().InputHandling(stateMachine, ref deltaTime);
                 stateMachine.GetActiveStack().Draw();
+                stateMachine.GetActiveStack().Update(ref deltaTime);
 
                 wnd.Display();
             }
