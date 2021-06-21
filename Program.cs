@@ -29,8 +29,8 @@ namespace FunnyFriday
             wnd.Closed += WindowClosed;
 
             var stateMachine = new StateMachine();
-            stateMachine.AddStack(new Options(wnd));
-            Console.WriteLine(Convert.ToChar(88));
+            stateMachine.AddStack(new Intro(wnd));
+
             while (wnd.IsOpen)
             {
                 wnd.DispatchEvents();

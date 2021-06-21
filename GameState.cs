@@ -17,8 +17,6 @@ namespace FunnyFriday
 
         public abstract void InputHandling(StateMachine stack, ref Clock deltaTime);
 
-        public int[] keys = new int[4];
-        public float scrollSpeed = 1.0f;
         public Sound menuMusic = new Sound(new SoundBuffer("Assets/Music/freakyMenu.ogg"));
     }
 
@@ -384,7 +382,10 @@ namespace FunnyFriday
 
             if(bFinished)
             {
-                stack.ChangeStack(new WeekSelect(wnd));
+                if (selectedMenu == 0)
+                    stack.ChangeStack(new WeekSelect(wnd));
+                else
+                    stack.ChangeStack(new Options(wnd));
             }
         }
     }
@@ -405,9 +406,17 @@ namespace FunnyFriday
         RectangleShape rightSide;
         RectangleShape top;
 
+        RectangleShape transition;
+        bool bTransition = false;
+        bool bFinished = false;
+        bool bExit = false;
+        bool bFinishedExit = false;
+
+        
+
         string[] weekInfo;
         Font regularFont;
-        Text regularText;
+
         List<Text> textContainer = new List<Text>();
 
         public WeekSelect(RenderWindow _wnd)
@@ -416,6 +425,9 @@ namespace FunnyFriday
             regularFont = new Font("Assets/Fonts/vcr.ttf");
 
             wnd = _wnd;
+
+            transition = new RectangleShape(new Vector2f(wnd.Size.X, wnd.Size.Y));
+            transition.FillColor = new Color(0, 0, 0, 255);
 
             for (int i = 0; i < weekInfo.Length; i++)
             {
@@ -428,8 +440,6 @@ namespace FunnyFriday
             difficultyTextures = textureManager.GetTextures(new string[] { "EASY0000", "NORMAL0000", "HARD0000", "arrow push right0000" });
 
             
-
-
             leftSide = new RectangleShape(new Vector2f(415, 300));
             leftSide.FillColor = new Color(0, 0, 0, 255);
             leftSide.Position = new Vector2f(0, 350);
@@ -482,10 +492,15 @@ namespace FunnyFriday
 
             foreach (var s in textContainer)
                 wnd.Draw(s);
+
+            wnd.Draw(transition);
         }
 
         public override void Update(ref Clock deltaTime)
         {
+            if (transition.FillColor.A >= 4 && !bTransition && !bExit)
+                transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A - 4));
+
             textContainer[0].DisplayedString = weekInfo[weekChoice].Split(',')[0];
             textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width - 50, 0);
 
@@ -520,6 +535,33 @@ namespace FunnyFriday
                 case 2:
                     spriteContainer["arrow"].Position = new Vector2f(spriteContainer["arrow"].Position.X, spriteContainer["hard"].Position.Y);
                     break;
+            }
+
+            if (bTransition == true)
+            {
+                if (transition.FillColor.A < 250)
+                {
+                    transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A + 4));
+                }
+                else
+                {
+                    bTransition = false;
+                    bFinished = true;
+                }
+            }
+
+            if (bExit == true)
+            {
+                if (transition.FillColor.A < 250)
+                {
+                    transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A + 4));
+                    Console.WriteLine(transition.FillColor.A);
+                }
+                else
+                {
+                    bExit = false;
+                    bFinishedExit = true;
+                }
             }
         }
 
@@ -560,8 +602,19 @@ namespace FunnyFriday
                 deltaTime.Restart();
             }
 
-            if(Keyboard.IsKeyPressed(Keyboard.Key.Enter) && deltaTime.ElapsedTime.AsSeconds() >= 0.1f)
-                stack.ChangeStack(new PlayState(wnd, weekChoice, 2, difficultyChoice));
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
+                bExit = true;
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Enter))
+                bTransition = true;
+
+            if (bFinishedExit)
+                stack.ChangeStack(new SelectScreen(wnd));
+
+            if (bFinished)
+                stack.ChangeStack(new PlayState(wnd, weekChoice, 0, difficultyChoice));
+
+            
         }
 
         
@@ -573,29 +626,38 @@ namespace FunnyFriday
         RenderWindow wnd;
         List<Text> keyText = new List<Text>();
 
-        Keyboard.Key[] key = new Keyboard.Key[4];
         Text scrollText;
-        string[] options;
 
         bool bChange = false;
 
         int nChoice = 0;
         float scrollSpeed = 1.0f;
 
+        Keyboard.Key[] keys = new Keyboard.Key[4];
+
+        RectangleShape transition;
+        bool bTransition;
+        bool bExit;
+        bool bFinishedExit;
+
         public Options(RenderWindow _wnd)
         {
             wnd = _wnd;
             spriteContainer.Add("background", new Sprite(new Texture("Assets/menuDesat.png")));
 
-            key[0] = Keyboard.Key.Left;
-            key[1] = Keyboard.Key.Down;
-            key[1] = Keyboard.Key.Up;
-            key[1] = Keyboard.Key.Right;
+            transition = new RectangleShape(new Vector2f(wnd.Size.X, wnd.Size.Y));
+            transition.FillColor = new Color(0, 0, 0, 255);
 
-            keyText.Add(new Text("Left: " + key[0].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
-            keyText.Add(new Text("Down: " + key[1].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
-            keyText.Add(new Text("Up: " + key[2].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
-            keyText.Add(new Text("Left: " + key[3].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
+            string[] options = File.ReadAllLines("Assets/Options.txt");
+            for(int i = 0; i < 4; i++)
+                keys[i] = (Keyboard.Key)Convert.ToInt32(options[i]);
+
+            scrollSpeed = (float)Convert.ToDouble(options[4]);
+
+            keyText.Add(new Text("Left: " + keys[0].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
+            keyText.Add(new Text("Down: " + keys[1].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
+            keyText.Add(new Text("Up: " + keys[2].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
+            keyText.Add(new Text("Left: " + keys[3].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
 
             for (int i = 0; i < 4; i++)
             {
@@ -620,53 +682,66 @@ namespace FunnyFriday
             foreach (var s in keyText)
                 wnd.Draw(s);
             wnd.Draw(scrollText);
+
+            wnd.Draw(transition);
         }
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
+            {
+                File.WriteAllText("Assets/Options.txt", "");
+                foreach(var s in keys)
+                    File.AppendAllText("Assets/Options.txt", ((int)s).ToString() + '\n');
+
+                File.AppendAllText("Assets/Options.txt", Math.Round(scrollSpeed, 2).ToString() + '\n');
+
                 stack.ChangeStack(new SelectScreen(wnd));
+            }
 
             foreach (int value in Enum.GetValues(typeof(Keyboard.Key)))
             {
-                if (Keyboard.IsKeyPressed((Keyboard.Key)value))
+                if (Keyboard.IsKeyPressed((Keyboard.Key)value) && bChange)
                     switch (nChoice)
                     {
                         case 0:
-                            if (key[1] != (Keyboard.Key)value && key[2] != (Keyboard.Key)value && key[3] != (Keyboard.Key)value)
+                            if (keys[1] != (Keyboard.Key)value && keys[2] != (Keyboard.Key)value && keys[3] != (Keyboard.Key)value && (Keyboard.Key)value != Keyboard.Key.Enter)
                             {
                                 keyText[0].DisplayedString = "Left: " + ((Keyboard.Key)value).ToString();
-                                key[0] = (Keyboard.Key)value;
+                                keys[0] = (Keyboard.Key)value;
                             }
                             bChange = false;
                             break;
 
                         case 1:
-                            if (key[0] != (Keyboard.Key)value && key[2] != (Keyboard.Key)value && key[3] != (Keyboard.Key)value)
+                            if (keys[0] != (Keyboard.Key)value && keys[2] != (Keyboard.Key)value && keys[3] != (Keyboard.Key)value && (Keyboard.Key)value != Keyboard.Key.Enter)
                             {
                                 keyText[1].DisplayedString = "Down: " + ((Keyboard.Key)value).ToString();
-                                key[1] = (Keyboard.Key)value;
+                                keys[1] = (Keyboard.Key)value;
                             }
                             bChange = false;
                             break;
                         case 2:
-                            if (key[0] != (Keyboard.Key)value && key[1] != (Keyboard.Key)value && key[3] != (Keyboard.Key)value)
+                            if (keys[0] != (Keyboard.Key)value && keys[1] != (Keyboard.Key)value && keys[3] != (Keyboard.Key)value && (Keyboard.Key)value != Keyboard.Key.Enter)
+                            {
                                 keyText[2].DisplayedString = "Up: " + ((Keyboard.Key)value).ToString();
+                                keys[2] = (Keyboard.Key)value;
+                            }
                             bChange = false;
                             break;
                         case 3:
-                            if (key[0] != (Keyboard.Key)value && key[1] != (Keyboard.Key)value && key[2] != (Keyboard.Key)value)
+                            if (keys[0] != (Keyboard.Key)value && keys[1] != (Keyboard.Key)value && keys[2] != (Keyboard.Key)value && (Keyboard.Key)value != Keyboard.Key.Enter)
+                            {
                                 keyText[3].DisplayedString = "Left: " + ((Keyboard.Key)value).ToString();
+                                keys[3] = (Keyboard.Key)value;
+                            }
                             bChange = false;
                             break;
                     }
             }
 
-            if(Keyboard.IsKeyPressed(Keyboard.Key.Enter) && deltaTime.ElapsedTime.AsSeconds() >= 0.3f)
-            {
+            if(Keyboard.IsKeyPressed(Keyboard.Key.Enter))
                 bChange = true;
-                deltaTime.Restart();
-            }
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.Down) && nChoice < 4 && deltaTime.ElapsedTime.AsSeconds() >= 0.3)
             {
@@ -691,11 +766,19 @@ namespace FunnyFriday
                 scrollSpeed -= 0.10f;
                 deltaTime.Restart();
             }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
+                bExit = true;
+
+
+            if (bFinishedExit)
+                stack.ChangeStack(new SelectScreen(wnd));
         }
 
         public override void Update(ref Clock deltaTime)
         {
-            Console.WriteLine(scrollSpeed);
+            if (transition.FillColor.A >= 4 && !bTransition && !bExit)
+                transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A - 4));
 
             foreach (var s in keyText)
                 s.Scale = new Vector2f(1.0f, 1.0f);
@@ -710,6 +793,20 @@ namespace FunnyFriday
             }
             else
                 scrollText.Scale = new Vector2f(1.0f, 1.0f);
+
+            if (bExit == true)
+            {
+                if (transition.FillColor.A < 250)
+                {
+                    transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A + 4));
+                    Console.WriteLine(transition.FillColor.A);
+                }
+                else
+                {
+                    bExit = false;
+                    bFinishedExit = true;
+                }
+            }
         }
     }
 }
