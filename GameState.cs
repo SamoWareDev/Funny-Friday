@@ -30,17 +30,22 @@ namespace FunnyFriday
 
         public override void Draw()
         {
+
         }
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
-            bool b1 = stack.GetActiveStack().GetType() == typeof(PlayState);
-            if (b1)
+            //MOST BOOTLEG METHOD LMAOOO
+            if (stack.GetActiveStack().GetType() == typeof(PlayState) || stack.GetActiveStack().GetType() == typeof(GameOver))
                 menuMusic.Stop();
+            else
+                if (menuMusic.Status == 0)
+                    menuMusic.Play();
         }
 
         public override void Update(ref Clock deltaTime)
         {
+
         }
     }
 
@@ -51,6 +56,8 @@ namespace FunnyFriday
         public Text regularText;
         public Text secondText;
         bool bFinished = false;
+
+        Clock introTime;
 
         public Intro(RenderWindow _wnd)
         {
@@ -71,45 +78,47 @@ namespace FunnyFriday
             secondText.DisplayedString = "";
             secondText.Position = new Vector2f(1280 / 2 - secondText.GetLocalBounds().Width / 2,
                 720 / 2 - secondText.GetLocalBounds().Height / 2 - 50);
+
+            introTime = new Clock();
         }
 
         public override void Update(ref Clock deltaTime)
         {
-            if (deltaTime.ElapsedTime.AsSeconds() >= 0.7f && deltaTime.ElapsedTime.AsSeconds() <= 2.0f)
+            if (introTime.ElapsedTime.AsSeconds() >= 0.7f && introTime.ElapsedTime.AsSeconds() <= 2.0f)
             {
                 regularText.DisplayedString = "FUNNY FRIDAY";
                 regularText.Position = new Vector2f(1280 / 2 - regularText.GetLocalBounds().Width / 2,
                     720 / 2 - regularText.GetLocalBounds().Height / 2 - 100);
             }
 
-            if (deltaTime.ElapsedTime.AsSeconds() >= 2.0f && deltaTime.ElapsedTime.AsSeconds() <= 3.0f)
+            if (introTime.ElapsedTime.AsSeconds() >= 2.0f && introTime.ElapsedTime.AsSeconds() <= 3.0f)
             {
                 secondText.DisplayedString = "LOL";
                 secondText.Position = new Vector2f(1280 / 2 - secondText.GetLocalBounds().Width / 2,
                     720 / 2 - secondText.GetLocalBounds().Height / 2 - 50);
             }
 
-            if (deltaTime.ElapsedTime.AsSeconds() >= 3.0f && deltaTime.ElapsedTime.AsSeconds() <= 4.1f)
+            if (introTime.ElapsedTime.AsSeconds() >= 3.0f && introTime.ElapsedTime.AsSeconds() <= 4.1f)
             {
                 regularText.DisplayedString = "";
                 secondText.DisplayedString = "";
             }
 
-            if (deltaTime.ElapsedTime.AsSeconds() >= 4.1f && deltaTime.ElapsedTime.AsSeconds() <= 5.4f)
+            if (introTime.ElapsedTime.AsSeconds() >= 4.1f && introTime.ElapsedTime.AsSeconds() <= 5.4f)
             {
                 regularText.DisplayedString = "FUCK YOU EGGER";
                 regularText.Position = new Vector2f(1280 / 2 - regularText.GetLocalBounds().Width / 2,
                     720 / 2 - regularText.GetLocalBounds().Height / 2 - 100);
             }
 
-            if(deltaTime.ElapsedTime.AsSeconds() >= 5.4f && deltaTime.ElapsedTime.AsSeconds() <= 6.5f)
+            if(introTime.ElapsedTime.AsSeconds() >= 5.4f && introTime.ElapsedTime.AsSeconds() <= 6.5f)
             {
                 secondText.DisplayedString = "GET IT IS TRASH";
                 secondText.Position = new Vector2f(1280 / 2 - secondText.GetLocalBounds().Width / 2,
                     720 / 2 - secondText.GetLocalBounds().Height / 2 - 50);
             }
 
-            if(deltaTime.ElapsedTime.AsSeconds() > 6.5)
+            if(introTime.ElapsedTime.AsSeconds() > 6.5)
             {
                 bFinished = true;
             }
@@ -142,7 +151,7 @@ namespace FunnyFriday
         RectangleShape transition;
         RectangleShape flash;
         int gameTick = 0;
-
+        Sound sound1;
 
 
         public TitleScreen(RenderWindow _wnd)
@@ -174,7 +183,7 @@ namespace FunnyFriday
             flash = new RectangleShape(new Vector2f(1280, 720));
             flash.FillColor = new Color(255, 255, 255, 255);
 
-
+            sound1 = new Sound(new SoundBuffer("Assets/Sounds/confirmMenu.ogg"));
         }
 
         override public void Draw()
@@ -239,11 +248,10 @@ namespace FunnyFriday
             if (Keyboard.IsKeyPressed(Keyboard.Key.Enter) && bTransition == false)
             {
                 bTransition = true;
-                Sound sound1 = new Sound(new SoundBuffer("Assets/Sounds/confirmMenu.ogg"));
                 sound1.Play();
             }
 
-            if (bFinished == true)
+            if (bFinished == true && sound1.Status == 0)
                 stack.ChangeStack(new SelectScreen(wnd));
         }
     }
@@ -266,6 +274,9 @@ namespace FunnyFriday
         bool bFinished = false;
 
         int selectedMenu = 0;
+
+        Sound sound1;
+        Sound scroll;
 
         public SelectScreen(RenderWindow _wnd)
         {
@@ -294,12 +305,13 @@ namespace FunnyFriday
             spriteContainer.Add("options", new Sprite(optionsWhite[0]));
             spriteContainer["options"].Position = new Vector2f(1280 / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
 
-
+            sound1 = new Sound(new SoundBuffer("Assets/Sounds/confirmMenu.ogg"));
+            scroll = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
         }
 
         public override void Update(ref Clock deltaTime)
         {
-            if (transition.FillColor.A >= 4 && bTransition == false)
+            if (transition.FillColor.A >= 4 && bTransition == false && sound1.Status == 0)
                 transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A - 4));
 
             if (selectedMenu == 0 && deltaTime.ElapsedTime.AsSeconds() >= 0.04f)
@@ -379,7 +391,6 @@ namespace FunnyFriday
                 selectedMenu = 1;
                 spriteContainer["menuBackground"].Position = new Vector2f(0, -2);
 
-                Sound scroll = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
                 scroll.Play();
             }
 
@@ -388,18 +399,16 @@ namespace FunnyFriday
                 spriteContainer["story"].Position = new Vector2f(1280 / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
                 selectedMenu = 0;
                 spriteContainer["menuBackground"].Position = new Vector2f(0, 0);
-                Sound sound1 = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
-                sound1.Play();
+                scroll.Play();
             }
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.Enter) && bTransition == false)
             {
-                Sound sound1 = new Sound(new SoundBuffer("Assets/Sounds/confirmMenu.ogg"));
                 sound1.Play();
                 bTransition = true;
             }
 
-            if(bFinished)
+            if(bFinished && sound1.Status == 0)
             {
                 if (selectedMenu == 0)
                     stack.ChangeStack(new WeekSelect(wnd));
@@ -842,6 +851,10 @@ namespace FunnyFriday
 
         RectangleShape transition;
 
+        View view;
+
+        bool bLerp = true;
+
         int gameTick = 0;
 
         bool bTransition = false;
@@ -869,14 +882,27 @@ namespace FunnyFriday
 
             transition = new RectangleShape(new Vector2f(1280, 720));
             transition.FillColor = new Color(0, 0, 0, 0);
+
+            view = new View(new FloatRect(0, 0, 1280, 720));
         }
 
         public override void Draw()
         {
+            wnd.SetView(view);
+
             foreach (var s in spriteContainer.Values)
                 wnd.Draw(s);
 
             wnd.Draw(transition);
+        }
+
+        public void LerpTo(Vector2f pos, ref bool b)
+        {
+            if (view.Center != pos)
+                view.Center = new Vector2f(view.Center.X + (pos.X - view.Center.X) / 100, view.Center.Y + (pos.Y - view.Center.Y) / 100);
+
+            if (Math.Sqrt(Math.Pow(pos.X - view.Center.X, 2) + Math.Pow(pos.Y - view.Center.Y, 2)) <= 0.01f)
+                b = false;
         }
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
@@ -899,13 +925,15 @@ namespace FunnyFriday
 
         public override void Update(ref Clock deltaTime)
         {
-            if(deltaTime.ElapsedTime.AsSeconds() >= 0.04f && !bTransition)
+            if (bLerp)
+                LerpTo(new Vector2f(1000, 500), ref bLerp);
+
+            if (deltaTime.ElapsedTime.AsSeconds() >= 0.04f && !bTransition)
             {
                 int index = gameTick % deathLoop.Count;
 
                 spriteContainer["playerDead"].Texture = deathLoop[index];
                 spriteContainer["playerDead"].TextureRect = new IntRect(0, 0, (int)deathLoop[index].Size.X, (int)deathLoop[index].Size.X);
-
 
                 gameTick++;
                 deltaTime.Restart();

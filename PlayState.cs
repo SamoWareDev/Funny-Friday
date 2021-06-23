@@ -103,6 +103,8 @@ namespace FunnyFriday
                 keys[i] = (Keyboard.Key)Convert.ToInt32(options[i]);
 
             scrollSpeed = (float)Convert.ToDouble(options[4]);
+            if (scrollSpeed > 5.0f)
+                scrollSpeed /= 10;
 
             view = new View(new FloatRect(0, 0, 1280, 720));
             view.Zoom(0.9f);
@@ -117,8 +119,7 @@ namespace FunnyFriday
             hpText = new Text("HP: " + nHP + "%", regularFont);
             hpText.Position = new Vector2f(1280 / 2 - hpText.GetLocalBounds().Width / 2, hpText.GetLocalBounds().Height * 2);
 
-            spriteContainer.Add("red", new Sprite(new Texture("Assets/Tricky/red.png")));
-            spriteContainer["red"].Position = new Vector2f(-500, -500);
+          
             
 
             var textureManager = new TextureManager("Assets/XML/Notes.xml");
@@ -134,10 +135,13 @@ namespace FunnyFriday
             {
                 case 0:
                     {
+                        spriteContainer.Add("red", new Sprite(new Texture("Assets/Tricky/red.png")));
+                        spriteContainer["red"].Position = new Vector2f(-500, -500);
                         switch (day)
                         {
                             case 0:
                                 {
+                                    
                                     spriteContainer.Add("background", new Sprite(new Texture("Assets/Tricky/island.png")));
                                     spriteContainer["background"].Scale = new Vector2f(0.65f, 0.65f);
                                     spriteContainer["background"].Position = new Vector2f(-600.0f, -200.0f);
@@ -275,10 +279,38 @@ namespace FunnyFriday
                         }
                        
 
-                        currentSong = chart.GetSong();
+                        
                     }
+
+                    
+                    break;
+
+                case 1:
+                    chart = new ChartParser("Assets/Music/Zavodila/zavodila-alt");
+
+                    instrumental = new Sound(new SoundBuffer("Assets/Music/Zavodila/Inst.ogg"));
+                    voice = new Sound(new SoundBuffer("Assets/Music/Zavodila/Voices.ogg"));
+
+                    textureManager = new TextureManager("Assets/XML/egger.xml");
+
+                    enemyIdle = textureManager.GetTextures(12, 19);
+                    enemyLeft = textureManager.GetTextures(20, 27);
+                    enemyDown = textureManager.GetTextures(4, 11);
+                    enemyUp = textureManager.GetTextures(36, 43);
+                    enemyRight = textureManager.GetTextures(28, 35);
+
+                    spriteContainer.Add("background", new Sprite(new Texture("Assets/sds.png")));
+                    spriteContainer["background"].Position = new Vector2f(-200, -150);
+
+                    spriteContainer.Add("enemy", new Sprite(enemyIdle[0]));
+                    spriteContainer["enemy"].Scale = new Vector2f(0.4f, 0.4f);
+                    spriteContainer["enemy"].Position = new Vector2f(150, 300);
+
+                    
                     break;
             }
+
+            currentSong = chart.GetSong();
 
             textureManager = new TextureManager("Assets/XML/Boyfriend.xml");
 
@@ -364,6 +396,11 @@ namespace FunnyFriday
                     }
                     catch { }
                 }
+
+            for (int i = 0; i < lanes.Count; i++)
+                for (int j = 0; j < lanes[i].Count - 1; j++)
+                    if (lanes[i][j].Position.Y == lanes[i][j + 1].Position.Y)
+                        lanes[i].RemoveAt(j + 1);
 
             for (int i = 0; i < 4; i++)
                 for (int j = 0; j < lanes[i].Count; j++)
@@ -603,8 +640,11 @@ namespace FunnyFriday
             try
             {
                 if (nHP <= 0)
+                {
+                    voice.Stop();
+                    instrumental.Stop();
                     stack.ChangeStack(new GameOver(wnd, nWeek, nDifficulty, nDay));
-
+                }
                 for (int i = 0; i < playerLane.Count; i++)
                 {
                     List<Texture> activeArrow = new List<Texture>();
@@ -684,7 +724,7 @@ namespace FunnyFriday
                 if (instrumental.Status == 0 && bNext)
                     stack.ChangeStack(new PlayState(wnd, nWeek, nDay + 1, nDifficulty));
 
-                if (instrumental.Status == 0 && bNext == false && nDay >= 1)
+                if (instrumental.Status == 0 && bNext == false && nDay >= 0)
                     stack.ChangeStack(new SelectScreen(wnd));
             }
     }
