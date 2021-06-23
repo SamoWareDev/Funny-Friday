@@ -6,7 +6,7 @@ namespace FunnyFriday
 {
     class StateMachine
     {
-        private Stack<GameState> stateStack = new Stack<GameState>();
+        public Stack<GameState> stateStack = new Stack<GameState>();
         private GameState currentState;
 
         public void AddStack(GameState state)

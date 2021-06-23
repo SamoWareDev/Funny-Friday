@@ -79,6 +79,9 @@ namespace FunnyFriday
         Text scoreText;
         Text missText;
 
+        int nHP = 50;
+        Text hpText;
+
         float delta = 0.0f;
 
         View view;
@@ -101,8 +104,6 @@ namespace FunnyFriday
 
             scrollSpeed = (float)Convert.ToDouble(options[4]);
 
-            menuMusic.Stop();
-
             view = new View(new FloatRect(0, 0, 1280, 720));
             view.Zoom(0.9f);
 
@@ -111,7 +112,10 @@ namespace FunnyFriday
             scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
 
             missText = new Text("Miss: " + score, regularFont);
-            missText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, missText.GetLocalBounds().Height);
+            missText.Position = new Vector2f(1280 / 2 - missText.GetLocalBounds().Width / 2, missText.GetLocalBounds().Height);
+
+            hpText = new Text("HP: " + nHP + "%", regularFont);
+            hpText.Position = new Vector2f(1280 / 2 - hpText.GetLocalBounds().Width / 2, hpText.GetLocalBounds().Height * 2);
 
             spriteContainer.Add("red", new Sprite(new Texture("Assets/Tricky/red.png")));
             spriteContainer["red"].Position = new Vector2f(-500, -500);
@@ -409,6 +413,7 @@ namespace FunnyFriday
 
             wnd.Draw(scoreText);
             wnd.Draw(missText);
+            wnd.Draw(hpText);
         }
 
         public void LerpTo(Vector2f pos, ref bool b)
@@ -437,6 +442,11 @@ namespace FunnyFriday
                             misses++;
                             missText.DisplayedString = "Miss: " + misses;
                             missText.Position = new Vector2f(1280 / 2 - missText.GetLocalBounds().Width / 2, missText.GetLocalBounds().Height);
+
+                            nHP -= 1 + nDifficulty;
+
+                            hpText.DisplayedString = "Hp: " + nHP + "%";
+                            hpText.Position = new Vector2f(640 - hpText.GetLocalBounds().Width / 2, hpText.Position.Y);
                         }
                     }
 
@@ -592,6 +602,9 @@ namespace FunnyFriday
         {
             try
             {
+                if (nHP <= 0)
+                    stack.ChangeStack(new GameOver(wnd, nWeek, nDifficulty, nDay));
+
                 for (int i = 0; i < playerLane.Count; i++)
                 {
                     List<Texture> activeArrow = new List<Texture>();
@@ -622,19 +635,37 @@ namespace FunnyFriday
                             {
                                 bPressed[i] = true;
 
-                                if (s.Position.Y <= arrowContainer[i].Position.Y + 25 * scrollSpeed)
+                                if (s.Position.Y <= arrowContainer[i].Position.Y + 25 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 25 * scrollSpeed)
+                                {
+                                    if (nHP <= 100)
+                                        nHP += 3;
                                     score += 100;
-                                else if (s.Position.Y <= arrowContainer[i].Position.Y + 50 * scrollSpeed)
+                                }
+                                else if (s.Position.Y <= arrowContainer[i].Position.Y + 50 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 50 * scrollSpeed)
+                                {
+                                    if (nHP <= 100)
+                                        nHP += 2;
                                     score += 50;
-                                else if (s.Position.Y <= arrowContainer[i].Position.Y + 100 * scrollSpeed)
+                                }
+                                else if (s.Position.Y <= arrowContainer[i].Position.Y + 100 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 100 * scrollSpeed)
+                                {
+                                    if(nHP <= 100)
+                                        nHP += 1;
                                     score += 25;
+                                }
+
+                                if (nHP >= 100)
+                                    nHP = 100;
 
                                 playerLane[i].Remove(s);
+
+                                hpText.DisplayedString = "Hp: " + nHP + "%";
+                                hpText.Position = new Vector2f(1280 / 2 - hpText.GetLocalBounds().Width / 2, hpText.Position.Y);
 
                                 currPlayerPos = i;
 
                                 scoreText.DisplayedString = "Score: " + score;
-                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width, 0);
+                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
 
                                 gameTick++;
                             }

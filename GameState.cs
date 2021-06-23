@@ -16,8 +16,32 @@ namespace FunnyFriday
         public abstract void Update(ref Clock deltaTime);
 
         public abstract void InputHandling(StateMachine stack, ref Clock deltaTime);
+    }
 
-        public Sound menuMusic = new Sound(new SoundBuffer("Assets/Music/freakyMenu.ogg"));
+    class MusicManager : GameState
+    {
+        Sound menuMusic;
+
+        public MusicManager()
+        {
+            menuMusic = new Sound(new SoundBuffer("Assets/Music/freakyMenu.ogg"));
+            menuMusic.Play();
+        }
+
+        public override void Draw()
+        {
+        }
+
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
+        {
+            bool b1 = stack.GetActiveStack().GetType() == typeof(PlayState);
+            if (b1)
+                menuMusic.Stop();
+        }
+
+        public override void Update(ref Clock deltaTime)
+        {
+        }
     }
 
     class Intro : GameState
@@ -28,7 +52,6 @@ namespace FunnyFriday
         public Text secondText;
         bool bFinished = false;
 
-
         public Intro(RenderWindow _wnd)
         {
             wnd = _wnd;
@@ -38,18 +61,16 @@ namespace FunnyFriday
             regularText.LetterSpacing = 2.0f;
             regularText.CharacterSize = 40;
             regularText.FillColor = Color.White;
-            regularText.Position = new Vector2f(wnd.Size.X / 2 - regularText.GetLocalBounds().Width / 2,
-                wnd.Size.Y / 2 - regularText.GetLocalBounds().Height / 2 - 100);
+            regularText.Position = new Vector2f(1280 / 2 - regularText.GetLocalBounds().Width / 2,
+                720 / 2 - regularText.GetLocalBounds().Height / 2 - 100);
 
             regularText.OutlineColor = new Color(20, 20, 20);
             regularText.OutlineThickness = 6.0f;
 
             secondText = new Text(regularText);
             secondText.DisplayedString = "";
-            secondText.Position = new Vector2f(wnd.Size.X / 2 - secondText.GetLocalBounds().Width / 2,
-                wnd.Size.Y / 2 - secondText.GetLocalBounds().Height / 2 - 50);
-
-            menuMusic.Play();
+            secondText.Position = new Vector2f(1280 / 2 - secondText.GetLocalBounds().Width / 2,
+                720 / 2 - secondText.GetLocalBounds().Height / 2 - 50);
         }
 
         public override void Update(ref Clock deltaTime)
@@ -57,15 +78,15 @@ namespace FunnyFriday
             if (deltaTime.ElapsedTime.AsSeconds() >= 0.7f && deltaTime.ElapsedTime.AsSeconds() <= 2.0f)
             {
                 regularText.DisplayedString = "FUNNY FRIDAY";
-                regularText.Position = new Vector2f(wnd.Size.X / 2 - regularText.GetLocalBounds().Width / 2,
-                    wnd.Size.Y / 2 - regularText.GetLocalBounds().Height / 2 - 100);
+                regularText.Position = new Vector2f(1280 / 2 - regularText.GetLocalBounds().Width / 2,
+                    720 / 2 - regularText.GetLocalBounds().Height / 2 - 100);
             }
 
             if (deltaTime.ElapsedTime.AsSeconds() >= 2.0f && deltaTime.ElapsedTime.AsSeconds() <= 3.0f)
             {
                 secondText.DisplayedString = "LOL";
-                secondText.Position = new Vector2f(wnd.Size.X / 2 - secondText.GetLocalBounds().Width / 2,
-                    wnd.Size.Y / 2 - secondText.GetLocalBounds().Height / 2 - 50);
+                secondText.Position = new Vector2f(1280 / 2 - secondText.GetLocalBounds().Width / 2,
+                    720 / 2 - secondText.GetLocalBounds().Height / 2 - 50);
             }
 
             if (deltaTime.ElapsedTime.AsSeconds() >= 3.0f && deltaTime.ElapsedTime.AsSeconds() <= 4.1f)
@@ -77,15 +98,15 @@ namespace FunnyFriday
             if (deltaTime.ElapsedTime.AsSeconds() >= 4.1f && deltaTime.ElapsedTime.AsSeconds() <= 5.4f)
             {
                 regularText.DisplayedString = "FUCK YOU EGGER";
-                regularText.Position = new Vector2f(wnd.Size.X / 2 - regularText.GetLocalBounds().Width / 2,
-                    wnd.Size.Y / 2 - regularText.GetLocalBounds().Height / 2 - 100);
+                regularText.Position = new Vector2f(1280 / 2 - regularText.GetLocalBounds().Width / 2,
+                    720 / 2 - regularText.GetLocalBounds().Height / 2 - 100);
             }
 
             if(deltaTime.ElapsedTime.AsSeconds() >= 5.4f && deltaTime.ElapsedTime.AsSeconds() <= 6.5f)
             {
                 secondText.DisplayedString = "GET IT IS TRASH";
-                secondText.Position = new Vector2f(wnd.Size.X / 2 - secondText.GetLocalBounds().Width / 2,
-                    wnd.Size.Y / 2 - secondText.GetLocalBounds().Height / 2 - 50);
+                secondText.Position = new Vector2f(1280 / 2 - secondText.GetLocalBounds().Width / 2,
+                    720 / 2 - secondText.GetLocalBounds().Height / 2 - 50);
             }
 
             if(deltaTime.ElapsedTime.AsSeconds() > 6.5)
@@ -147,14 +168,13 @@ namespace FunnyFriday
             spriteContainer.Add("logo", new Sprite(logoTexture[0]));
             spriteContainer["logo"].Position = new Vector2f(-60.0f, -100.0f);
 
-            transition = new RectangleShape(new Vector2f(wnd.Size.X, wnd.Size.Y));
+            transition = new RectangleShape(new Vector2f(1280, 720));
             transition.FillColor = new Color(0, 0, 0, 0);
 
-            flash = new RectangleShape(new Vector2f(wnd.Size.X, wnd.Size.Y));
+            flash = new RectangleShape(new Vector2f(1280, 720));
             flash.FillColor = new Color(255, 255, 255, 255);
 
-            if (menuMusic.Status == 0)
-                menuMusic.Play();
+
         }
 
         override public void Draw()
@@ -262,20 +282,19 @@ namespace FunnyFriday
 
             optionsWhite = textureManager.GetTextures(new string[] { "options white0000", "options white0001", "options white0002" });
 
-            transition = new RectangleShape(new Vector2f(wnd.Size.X, wnd.Size.Y));
+            transition = new RectangleShape(new Vector2f(1280, 720));
             transition.FillColor = new Color(0, 0, 0, 255);
 
             spriteContainer.Add("menuBackground", new Sprite(new Texture("Assets/menuBGMagenta.png")));
             spriteContainer["menuBackground"].Position = new Vector2f(0, 0);
 
             spriteContainer.Add("story", new Sprite(storySelected[0]));
-            spriteContainer["story"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
+            spriteContainer["story"].Position = new Vector2f(1280 / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
 
             spriteContainer.Add("options", new Sprite(optionsWhite[0]));
-            spriteContainer["options"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
+            spriteContainer["options"].Position = new Vector2f(1280 / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
 
-            if (menuMusic.Status == 0)
-                menuMusic.Play();
+
         }
 
         public override void Update(ref Clock deltaTime)
@@ -290,7 +309,7 @@ namespace FunnyFriday
                 spriteContainer["story"].TextureRect = new IntRect(0, 0, (int)storyWhite[index].Size.X,
                     (int)storyWhite[index].Size.Y);
                 spriteContainer["story"].Texture = storyWhite[index];
-                spriteContainer["story"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
+                spriteContainer["story"].Position = new Vector2f(1280 / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
 
 
                 int index1 = gameTick % optionsSelected.Count;
@@ -298,7 +317,7 @@ namespace FunnyFriday
                 spriteContainer["options"].TextureRect = new IntRect(0, 0, (int)optionsSelected[index1].Size.X,
                     (int)optionsSelected[index1].Size.Y);
                 spriteContainer["options"].Texture = optionsSelected[index1];
-                spriteContainer["options"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
+                spriteContainer["options"].Position = new Vector2f(1280 / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
 
 
                 gameTick++;
@@ -312,7 +331,7 @@ namespace FunnyFriday
                 spriteContainer["story"].TextureRect = new IntRect(0, 0, (int)storySelected[index].Size.X,
                     (int)storySelected[index].Size.Y);
                 spriteContainer["story"].Texture = storySelected[index];
-                spriteContainer["story"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
+                spriteContainer["story"].Position = new Vector2f(1280 / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
 
 
                 int index1 = gameTick % optionsWhite.Count;
@@ -320,7 +339,7 @@ namespace FunnyFriday
                 spriteContainer["options"].TextureRect = new IntRect(0, 0, (int)optionsWhite[index1].Size.X,
                     (int)optionsWhite[index1].Size.Y);
                 spriteContainer["options"].Texture = optionsWhite[index1];
-                spriteContainer["options"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
+                spriteContainer["options"].Position = new Vector2f(1280 / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
 
 
                 gameTick++;
@@ -356,7 +375,7 @@ namespace FunnyFriday
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.Down) && selectedMenu < 1)
             {
-                spriteContainer["options"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
+                spriteContainer["options"].Position = new Vector2f(1280 / 2 - spriteContainer["options"].GetLocalBounds().Width / 2, 400);
                 selectedMenu = 1;
                 spriteContainer["menuBackground"].Position = new Vector2f(0, -2);
 
@@ -366,7 +385,7 @@ namespace FunnyFriday
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.Up) && selectedMenu > 0)
             {
-                spriteContainer["story"].Position = new Vector2f(wnd.Size.X / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
+                spriteContainer["story"].Position = new Vector2f(1280 / 2 - spriteContainer["story"].GetLocalBounds().Width / 2, 200);
                 selectedMenu = 0;
                 spriteContainer["menuBackground"].Position = new Vector2f(0, 0);
                 Sound sound1 = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
@@ -426,13 +445,13 @@ namespace FunnyFriday
 
             wnd = _wnd;
 
-            transition = new RectangleShape(new Vector2f(wnd.Size.X, wnd.Size.Y));
+            transition = new RectangleShape(new Vector2f(1280, 720));
             transition.FillColor = new Color(0, 0, 0, 255);
 
             for (int i = 0; i < weekInfo.Length; i++)
             {
                 weekContainer.Add(new Sprite(new Texture($"Assets/storymenu/week{i + 1}.png")));
-                weekContainer[i].Position = new Vector2f(wnd.Size.X / 2 - weekContainer[i].GetLocalBounds().Width / 2 + (weekContainer[i].GetLocalBounds().Width * i) + 100 * i, 400);
+                weekContainer[i].Position = new Vector2f(1280 / 2 - weekContainer[i].GetLocalBounds().Width / 2 + (weekContainer[i].GetLocalBounds().Width * i) + 100 * i, 400);
             }
 
             var textureManager = new TextureManager("Assets/XML/campainAssets.xml");
@@ -464,12 +483,12 @@ namespace FunnyFriday
             spriteContainer["arrow"].Scale = new Vector2f(0.8f, 0.8f);
             spriteContainer["arrow"].Position = new Vector2f(rightSide.Position.X + 20, 400);
 
-            top = new RectangleShape(new Vector2f(wnd.Size.X, 320));
+            top = new RectangleShape(new Vector2f(1280, 320));
             top.FillColor = new Color(255, 69, 0, 255);
             top.Position = new Vector2f(0, 50);
 
             textContainer.Add(new Text(weekInfo[0].Split(',')[0], regularFont));
-            textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width - 20, 0);
+            textContainer[0].Position = new Vector2f(1280 - textContainer[0].GetLocalBounds().Width - 20, 0);
 
             textContainer.Add(new Text(weekInfo[0].Split(',')[1].Replace('-', '\n'), regularFont));
             textContainer[1].Position = new Vector2f(textContainer[0].GetLocalBounds().Width / 2, 450);
@@ -502,7 +521,7 @@ namespace FunnyFriday
                 transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A - 4));
 
             textContainer[0].DisplayedString = weekInfo[weekChoice].Split(',')[0];
-            textContainer[0].Position = new Vector2f(wnd.Size.X - textContainer[0].GetLocalBounds().Width - 50, 0);
+            textContainer[0].Position = new Vector2f(1280 - textContainer[0].GetLocalBounds().Width - 50, 0);
 
             textContainer[1].DisplayedString = weekInfo[weekChoice].Split(',')[1].Replace('-', '\n');
             textContainer[1].Position = new Vector2f(textContainer[0].GetLocalBounds().Width / 2, 450);
@@ -511,13 +530,13 @@ namespace FunnyFriday
             textContainer[2].DisplayedString = "Week Score: " + weekInfo[weekChoice].Split(',')[textContainer.Count - 1];
             textContainer[2].Position = new Vector2f(20, 0);
 
-            if (bLeft && weekContainer[weekChoice].Position.X <= (wnd.Size.X / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2))
+            if (bLeft && weekContainer[weekChoice].Position.X <= (1280 / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2))
             {
                 foreach (Sprite week in weekContainer)
                     week.Position = new Vector2f(week.Position.X + 25, 400);
             }
 
-            if (bRight && weekContainer[weekChoice].Position.X >= (wnd.Size.X / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2))
+            if (bRight && weekContainer[weekChoice].Position.X >= (1280 / 2 - weekContainer[weekChoice].GetLocalBounds().Width / 2))
             {
                 foreach (Sprite week in weekContainer)
                     week.Position = new Vector2f(week.Position.X - 25, 400);
@@ -555,7 +574,6 @@ namespace FunnyFriday
                 if (transition.FillColor.A < 250)
                 {
                     transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A + 4));
-                    Console.WriteLine(transition.FillColor.A);
                 }
                 else
                 {
@@ -645,7 +663,7 @@ namespace FunnyFriday
             wnd = _wnd;
             spriteContainer.Add("background", new Sprite(new Texture("Assets/menuDesat.png")));
 
-            transition = new RectangleShape(new Vector2f(wnd.Size.X, wnd.Size.Y));
+            transition = new RectangleShape(new Vector2f(1280, 720));
             transition.FillColor = new Color(0, 0, 0, 255);
 
             string[] options = File.ReadAllLines("Assets/Options.txt");
@@ -800,6 +818,120 @@ namespace FunnyFriday
                 {
                     transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A + 4));
                     Console.WriteLine(transition.FillColor.A);
+                }
+                else
+                {
+                    bExit = false;
+                    bFinishedExit = true;
+                }
+            }
+        }
+    }
+
+    class GameOver : GameState
+    {
+        RenderWindow wnd;
+        int nWeek = 0;
+        int nDifficulty = 0;
+        int nSong = 0;
+
+        Dictionary<string, Sprite> spriteContainer = new Dictionary<string, Sprite>();
+
+        List<Texture> deathLoop = new List<Texture>();
+        List<Texture> deathConfirm = new List<Texture>();
+
+        RectangleShape transition;
+
+        int gameTick = 0;
+
+        bool bTransition = false;
+        bool bFinised = false;
+
+        bool bExit = false;
+        bool bFinishedExit = false;
+
+
+        public GameOver(RenderWindow _wnd, int week, int difficulty, int song)
+        {
+            wnd = _wnd;
+            nWeek = week;
+            nDifficulty = difficulty;
+            nSong = song;
+
+            var textureManager = new TextureManager("Assets/XML/Boyfriend.xml");
+
+            deathLoop = textureManager.GetTextures(4, 38);
+            deathConfirm = textureManager.GetTextures(38, 71);
+
+            spriteContainer.Add("playerDead", new Sprite(deathLoop[0]));
+            spriteContainer["playerDead"].Scale = new Vector2f(0.65f, 0.65f);
+            spriteContainer["playerDead"].Position = new Vector2f(900, 400);
+
+            transition = new RectangleShape(new Vector2f(1280, 720));
+            transition.FillColor = new Color(0, 0, 0, 0);
+        }
+
+        public override void Draw()
+        {
+            foreach (var s in spriteContainer.Values)
+                wnd.Draw(s);
+
+            wnd.Draw(transition);
+        }
+
+        public override void InputHandling(StateMachine stack, ref Clock deltaTime)
+        {
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Enter))
+            {
+                bTransition = true;
+                gameTick = 0;
+            }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
+                bExit = true;
+
+            if (bFinishedExit)
+                stack.ChangeStack(new SelectScreen(wnd));
+
+            if (bFinised)
+                stack.ChangeStack(new PlayState(wnd, nWeek, nSong, nDifficulty));
+        }
+
+        public override void Update(ref Clock deltaTime)
+        {
+            if(deltaTime.ElapsedTime.AsSeconds() >= 0.04f && !bTransition)
+            {
+                int index = gameTick % deathLoop.Count;
+
+                spriteContainer["playerDead"].Texture = deathLoop[index];
+                spriteContainer["playerDead"].TextureRect = new IntRect(0, 0, (int)deathLoop[index].Size.X, (int)deathLoop[index].Size.X);
+
+
+                gameTick++;
+                deltaTime.Restart();
+            }
+
+            if(bTransition && deltaTime.ElapsedTime.AsSeconds() >= 0.04f)
+            {
+                if(gameTick <= deathConfirm.Count - 1)
+                {
+                    spriteContainer["playerDead"].Texture = deathConfirm[gameTick];
+                    spriteContainer["playerDead"].TextureRect = new IntRect(0, 0, (int)deathConfirm[gameTick].Size.X, (int)deathConfirm[gameTick].Size.X);
+                }
+                else
+                {
+                    bFinised = true;
+                }
+
+                gameTick++;
+                deltaTime.Restart();
+            }
+
+            if (bExit == true)
+            {
+                if (transition.FillColor.A < 250)
+                {
+                    transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A + 4));
                 }
                 else
                 {
