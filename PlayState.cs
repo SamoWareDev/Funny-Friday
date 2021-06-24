@@ -419,13 +419,13 @@ namespace FunnyFriday
                             if (lane <= 3)
                             {
                                 lanes[lane + 4].Add(new Sprite(noteArray[lane]));
-                                lanes[lane + 4][lanes[lane + 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed * mod);
+                                lanes[lane + 4][lanes[lane + 4].Count - 1].Position = new Vector2f(0, (float)(yPos  - 300 * Convert.ToInt32(bDownScroll)) * scrollSpeed * mod);
                                 lanes[lane + 4][lanes[lane + 4].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                             if (lane >= 4)
                             {
                                 lanes[lane - 4].Add(new Sprite(noteArray[lane - 4]));
-                                lanes[lane - 4][lanes[lane - 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed * mod);
+                                lanes[lane - 4][lanes[lane - 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 300 * Convert.ToInt32(bDownScroll)) * scrollSpeed * mod);
                                 lanes[lane - 4][lanes[lane - 4].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                         }
@@ -434,13 +434,13 @@ namespace FunnyFriday
                             if (lane <= 3)
                             {
                                 lanes[lane].Add(new Sprite(noteArray[lane]));
-                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed * mod);
+                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 300 * Convert.ToInt32(bDownScroll)) * scrollSpeed * mod);
                                 lanes[lane][lanes[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                             if(lane >= 4)
                             {
                                 lanes[lane].Add(new Sprite(noteArray[lane - 4]));
-                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed * mod);
+                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 300 * Convert.ToInt32(bDownScroll)) * scrollSpeed * mod);
                                 lanes[lane][lanes[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                         } 
@@ -528,6 +528,12 @@ namespace FunnyFriday
                         if (!bDownScroll)
                             if (playerLane[i][j].Position.Y <= arrowContainer[i].Position.Y - 175.0f)
                             {
+                                Sound miss = new Sound(new SoundBuffer("Assets/Sounds/missnote2.ogg"));
+                                miss.Volume = 25.0f;
+                                miss.Play();
+
+                                if (miss.Status == 0)
+                                    miss.Dispose();
                                 playerLane[i].Remove(playerLane[i][j]);
                                 misses++;
                                 missText.DisplayedString = "Miss: " + misses;

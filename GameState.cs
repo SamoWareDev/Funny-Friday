@@ -691,6 +691,7 @@ namespace FunnyFriday
 
         public Options(RenderWindow _wnd)
         {
+
             wnd = _wnd;
             spriteContainer.Add("background", new Sprite(new Texture("Assets/menuDesat.png")));
             spriteContainer["background"].Scale = new Vector2f(1.1f, 1.1f);
@@ -729,6 +730,8 @@ namespace FunnyFriday
             downText.OutlineThickness = 10.0f;
             view = new View(new FloatRect(0, 0, 1280, 720));
             view.Zoom(0.9f);
+
+            
         }
 
         public override void Draw()
@@ -886,7 +889,6 @@ namespace FunnyFriday
                 if (transition.FillColor.A < 250)
                 {
                     transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A + 4));
-                    Console.WriteLine(transition.FillColor.A);
                 }
                 else
                 {
@@ -923,6 +925,9 @@ namespace FunnyFriday
         bool bExit = false;
         bool bFinishedExit = false;
 
+        bool bPlay = true;
+        Sound death;
+
         Clock cClock;
 
 
@@ -947,6 +952,7 @@ namespace FunnyFriday
 
             view = new View(new FloatRect(0, 0, 1280, 720));
             cClock = new Clock();
+            death = new Sound(new SoundBuffer("Assets/Sounds/fnf_loss_sfx.ogg"));
         }
 
         public override void Draw()
@@ -972,6 +978,12 @@ namespace FunnyFriday
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
+            if(bPlay)
+            {
+                death.Play();
+                bPlay = false;
+            }
+
             if (Keyboard.IsKeyPressed(Keyboard.Key.Enter))
             {
                 bTransition = true;
