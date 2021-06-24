@@ -58,7 +58,8 @@ namespace FunnyFriday
         List<List<Sprite>> lanes = new List<List<Sprite>>();
 
         bool[] bPressed = { false, false, false, false };
-        
+
+        bool bDownScroll = false;
 
         int currPlayerPos = -1;
         int currEnemyPos = -1;
@@ -105,6 +106,8 @@ namespace FunnyFriday
             scrollSpeed = (float)Convert.ToDouble(options[4]);
             if (scrollSpeed > 5.0f)
                 scrollSpeed /= 10;
+
+            bDownScroll = Convert.ToBoolean(options[5]);
 
             view = new View(new FloatRect(0, 0, 1280, 720));
             view.Zoom(0.9f);
@@ -376,8 +379,16 @@ namespace FunnyFriday
             {
                 arrowContainer[i].Scale = new Vector2f(0.7f, 0.7f);
                 enemyArrowContainer[i].Scale = new Vector2f(0.7f, 0.7f);
+                if(!bDownScroll)
+                {
                 arrowContainer[i].Position = new Vector2f(750 + 125 * i, 50);
                 enemyArrowContainer[i].Position = new Vector2f(50 + 125 * i, 50);
+                }
+                else
+                {
+                    arrowContainer[i].Position = new Vector2f(750 + 125 * i, 720 - 150);
+                    enemyArrowContainer[i].Position = new Vector2f(50 + 125 * i, 720 - 150);
+                }
             }
 
 
@@ -395,6 +406,11 @@ namespace FunnyFriday
                 {
                     try
                     {
+                        int mod = 1;
+
+                        if (bDownScroll)
+                            mod = -1;
+
                         double yPos = currentSong.song.notes[i].sectionNotes[j][0];
                         int lane = Convert.ToInt32(currentSong.song.notes[i].sectionNotes[j][1]);
 
@@ -403,13 +419,13 @@ namespace FunnyFriday
                             if (lane <= 3)
                             {
                                 lanes[lane + 4].Add(new Sprite(noteArray[lane]));
-                                lanes[lane + 4][lanes[lane + 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed);
+                                lanes[lane + 4][lanes[lane + 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed * mod);
                                 lanes[lane + 4][lanes[lane + 4].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                             if (lane >= 4)
                             {
                                 lanes[lane - 4].Add(new Sprite(noteArray[lane - 4]));
-                                lanes[lane - 4][lanes[lane - 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed);
+                                lanes[lane - 4][lanes[lane - 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed * mod);
                                 lanes[lane - 4][lanes[lane - 4].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                         }
@@ -418,13 +434,13 @@ namespace FunnyFriday
                             if (lane <= 3)
                             {
                                 lanes[lane].Add(new Sprite(noteArray[lane]));
-                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed);
+                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed * mod);
                                 lanes[lane][lanes[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                             if(lane >= 4)
                             {
                                 lanes[lane].Add(new Sprite(noteArray[lane - 4]));
-                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed);
+                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed * mod);
                                 lanes[lane][lanes[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                         } 
@@ -501,36 +517,60 @@ namespace FunnyFriday
         {
             try
             {
+                int mod = -1;
+                if (bDownScroll)
+                    mod = 1;
+
                 for (int i = 0; i < playerLane.Count; i++)
                     for (int j = 0; j < playerLane[i].Count; j++)
                     {
-                        playerLane[i][j].Position = new Vector2f(playerLane[i][j].Position.X, playerLane[i][j].Position.Y - delta.AsSeconds() * 1000.0f * scrollSpeed);
+                        playerLane[i][j].Position = new Vector2f(playerLane[i][j].Position.X, playerLane[i][j].Position.Y + delta.AsSeconds() * 1000.0f * scrollSpeed * mod);
+                        if (!bDownScroll)
+                            if (playerLane[i][j].Position.Y <= arrowContainer[i].Position.Y - 175.0f)
+                            {
+                                playerLane[i].Remove(playerLane[i][j]);
+                                misses++;
+                                missText.DisplayedString = "Miss: " + misses;
+                                missText.Position = new Vector2f(1280 / 2 - missText.GetLocalBounds().Width / 2, missText.GetLocalBounds().Height);
 
-                        if (playerLane[i][j].Position.Y <= arrowContainer[i].Position.Y - 175.0f)
-                        {
-                            playerLane[i].Remove(playerLane[i][j]);
-                            misses++;
-                            missText.DisplayedString = "Miss: " + misses;
-                            missText.Position = new Vector2f(1280 / 2 - missText.GetLocalBounds().Width / 2, missText.GetLocalBounds().Height);
+                                nHP -= 1 + nDifficulty;
 
-                            nHP -= 1 + nDifficulty;
+                                hpText.DisplayedString = "Hp: " + nHP + "%";
+                                hpText.Position = new Vector2f(640 - hpText.GetLocalBounds().Width / 2, hpText.Position.Y);
+                            }
+                        if (bDownScroll)
+                            if (playerLane[i][j].Position.Y >= arrowContainer[i].Position.Y + 175.0f)
+                            {
+                                playerLane[i].Remove(playerLane[i][j]);
+                                misses++;
+                                missText.DisplayedString = "Miss: " + misses;
+                                missText.Position = new Vector2f(1280 / 2 - missText.GetLocalBounds().Width / 2, missText.GetLocalBounds().Height);
 
-                            hpText.DisplayedString = "Hp: " + nHP + "%";
-                            hpText.Position = new Vector2f(640 - hpText.GetLocalBounds().Width / 2, hpText.Position.Y);
-                        }
+                                nHP -= 1 + nDifficulty;
+
+                                hpText.DisplayedString = "Hp: " + nHP + "%";
+                                hpText.Position = new Vector2f(640 - hpText.GetLocalBounds().Width / 2, hpText.Position.Y);
+                            }
                     }
 
 
                 for (int i = 0; i < enemyLane.Count; i++)
                     for (int j = 0; j < enemyLane[i].Count; j++)
                     {
-                        if (enemyLane[i][j].Position.Y <= enemyArrowContainer[i].Position.Y)
-                        {
-                            currEnemyPos = i;
-                            enemyLane[i].Remove(enemyLane[i][j]);
-                        }
+                        if (!bDownScroll)
+                            if (enemyLane[i][j].Position.Y <= enemyArrowContainer[i].Position.Y)
+                            {
+                                currEnemyPos = i;
+                                enemyLane[i].Remove(enemyLane[i][j]);
+                            }
+                        if(bDownScroll)
+                            if (enemyLane[i][j].Position.Y >= enemyArrowContainer[i].Position.Y)
+                            {
+                                currEnemyPos = i;
+                                enemyLane[i].Remove(enemyLane[i][j]);
+                            }
 
-                        enemyLane[i][j].Position = new Vector2f(enemyLane[i][j].Position.X, enemyLane[i][j].Position.Y - delta.AsSeconds() * 1000.0f * scrollSpeed);
+                        enemyLane[i][j].Position = new Vector2f(enemyLane[i][j].Position.X, enemyLane[i][j].Position.Y + delta.AsSeconds() * 1000.0f * scrollSpeed * mod);
                     }
             }
             catch { }
@@ -656,6 +696,8 @@ namespace FunnyFriday
 
             for (int i = 0; i < playerLane.Count; i++)
             {
+                if(!bDownScroll)
+                {
                 if (playerLane[i].Count > 0)
                     if (playerLane[i][0].Position.Y <= arrowContainer[i].Position.Y + 1000)
                         bFocusPlayer = true;
@@ -663,6 +705,21 @@ namespace FunnyFriday
                 if (enemyLane[i].Count > 0)
                     if (enemyLane[i][0].Position.Y <= arrowContainer[i].Position.Y)
                         bFocusEnemy = true;
+                }
+
+                if(bDownScroll)
+                {
+                    if (bDownScroll)
+                    {
+                        if (playerLane[i].Count > 0)
+                            if (playerLane[i][0].Position.Y >= arrowContainer[i].Position.Y - 1000)
+                                bFocusPlayer = true;
+
+                        if (enemyLane[i].Count > 0)
+                            if (enemyLane[i][0].Position.Y >= arrowContainer[i].Position.Y)
+                                bFocusEnemy = true;
+                    }
+                }
             }
 
             delta = musicTime.Restart();
@@ -704,44 +761,86 @@ namespace FunnyFriday
                         arrowContainer[i].Texture = activeArrow[1];
 
                         foreach (var s in playerLane[i])
-                            if (s.Position.Y <= arrowContainer[i].Position.Y + 100 * scrollSpeed && !bPressed[i])
-                            {
-                                bPressed[i] = true;
-
-                                if (s.Position.Y <= arrowContainer[i].Position.Y + 25 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 25 * scrollSpeed)
+                        {
+                            if (!bDownScroll)
+                                if (s.Position.Y <= arrowContainer[i].Position.Y + 100 * scrollSpeed && !bPressed[i])
                                 {
-                                    if (nHP <= 100)
-                                        nHP += 3;
-                                    score += 100;
+                                    bPressed[i] = true;
+
+                                    if (s.Position.Y <= arrowContainer[i].Position.Y + 25 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 25 * scrollSpeed)
+                                    {
+                                        if (nHP <= 100)
+                                            nHP += 3;
+                                        score += 100;
+                                    }
+                                    else if (s.Position.Y <= arrowContainer[i].Position.Y + 50 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 50 * scrollSpeed)
+                                    {
+                                        if (nHP <= 100)
+                                            nHP += 2;
+                                        score += 50;
+                                    }
+                                    else if (s.Position.Y <= arrowContainer[i].Position.Y + 100 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 100 * scrollSpeed)
+                                    {
+                                        if (nHP <= 100)
+                                            nHP += 1;
+                                        score += 25;
+                                    }
+
+                                    if (nHP >= 100)
+                                        nHP = 100;
+
+                                    playerLane[i].Remove(s);
+
+                                    hpText.DisplayedString = "Hp: " + nHP + "%";
+                                    hpText.Position = new Vector2f(1280 / 2 - hpText.GetLocalBounds().Width / 2, hpText.Position.Y);
+
+                                    currPlayerPos = i;
+
+                                    scoreText.DisplayedString = "Score: " + score;
+                                    scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                                    gameTick++;
                                 }
-                                else if (s.Position.Y <= arrowContainer[i].Position.Y + 50 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 50 * scrollSpeed)
+                            if (bDownScroll)
+                                if (s.Position.Y >= arrowContainer[i].Position.Y - 100 * scrollSpeed && !bPressed[i])
                                 {
-                                    if (nHP <= 100)
-                                        nHP += 2;
-                                    score += 50;
+                                    bPressed[i] = true;
+
+                                    if (s.Position.Y >= arrowContainer[i].Position.Y - 25 * scrollSpeed && s.Position.Y <= arrowContainer[i].Position.Y + 25 * scrollSpeed)
+                                    {
+                                        if (nHP <= 100)
+                                            nHP += 3;
+                                        score += 100;
+                                    }
+                                    else if (s.Position.Y >= arrowContainer[i].Position.Y - 50 * scrollSpeed && s.Position.Y <= arrowContainer[i].Position.Y + 50 * scrollSpeed)
+                                    {
+                                        if (nHP <= 100)
+                                            nHP += 2;
+                                        score += 50;
+                                    }
+                                    else if (s.Position.Y >= arrowContainer[i].Position.Y - 100 * scrollSpeed && s.Position.Y <= arrowContainer[i].Position.Y + 100 * scrollSpeed)
+                                    {
+                                        if (nHP <= 100)
+                                            nHP += 1;
+                                        score += 25;
+                                    }
+
+                                    if (nHP >= 100)
+                                        nHP = 100;
+
+                                    playerLane[i].Remove(s);
+
+                                    hpText.DisplayedString = "Hp: " + nHP + "%";
+                                    hpText.Position = new Vector2f(1280 / 2 - hpText.GetLocalBounds().Width / 2, hpText.Position.Y);
+
+                                    currPlayerPos = i;
+
+                                    scoreText.DisplayedString = "Score: " + score;
+                                    scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
+
+                                    gameTick++;
                                 }
-                                else if (s.Position.Y <= arrowContainer[i].Position.Y + 100 * scrollSpeed && s.Position.Y >= arrowContainer[i].Position.Y - 100 * scrollSpeed)
-                                {
-                                    if(nHP <= 100)
-                                        nHP += 1;
-                                    score += 25;
-                                }
-
-                                if (nHP >= 100)
-                                    nHP = 100;
-
-                                playerLane[i].Remove(s);
-
-                                hpText.DisplayedString = "Hp: " + nHP + "%";
-                                hpText.Position = new Vector2f(1280 / 2 - hpText.GetLocalBounds().Width / 2, hpText.Position.Y);
-
-                                currPlayerPos = i;
-
-                                scoreText.DisplayedString = "Score: " + score;
-                                scoreText.Position = new Vector2f(1280 / 2 - scoreText.GetLocalBounds().Width / 2, 0);
-
-                                gameTick++;
-                            }
+                        }
                     }
                     else
                     {

@@ -660,22 +660,40 @@ namespace FunnyFriday
 
         Text scrollText;
 
+        Text downText;
+
         bool bChange = false;
 
         int nChoice = 0;
         float scrollSpeed = 1.0f;
 
+        bool bDownScroll = false;
+
         Keyboard.Key[] keys = new Keyboard.Key[4];
 
         RectangleShape transition;
-        bool bTransition;
+        bool bTransition = false;
         bool bExit;
         bool bFinishedExit;
+
+        View view;
+        int lerpY = -6;
+        bool bLerp = true;
+
+        public void LerpTo(Vector2f pos, ref bool b)
+        {
+            if (view.Center != pos)
+                view.Center = new Vector2f(view.Center.X + (pos.X - view.Center.X) / 20, view.Center.Y + (pos.Y - view.Center.Y) / 20);
+
+            if (Math.Sqrt(Math.Pow(pos.X - view.Center.X, 2) + Math.Pow(pos.Y - view.Center.Y, 2)) <= 0.01f)
+                b = false;
+        }
 
         public Options(RenderWindow _wnd)
         {
             wnd = _wnd;
             spriteContainer.Add("background", new Sprite(new Texture("Assets/menuDesat.png")));
+            spriteContainer["background"].Scale = new Vector2f(1.1f, 1.1f);
 
             transition = new RectangleShape(new Vector2f(1280, 720));
             transition.FillColor = new Color(0, 0, 0, 255);
@@ -685,6 +703,7 @@ namespace FunnyFriday
                 keys[i] = (Keyboard.Key)Convert.ToInt32(options[i]);
 
             scrollSpeed = (float)Convert.ToDouble(options[4]);
+            bDownScroll = Convert.ToBoolean(options[5]);
 
             keyText.Add(new Text("Left: " + keys[0].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
             keyText.Add(new Text("Down: " + keys[1].ToString(), new Font("Assets/Fonts/komika-display.regular.ttf")));
@@ -693,29 +712,38 @@ namespace FunnyFriday
 
             for (int i = 0; i < 4; i++)
             {
-                keyText[i].Position = new Vector2f(200, 100 + 100 * i);
+                keyText[i].Position = new Vector2f(200, 75 + 100 * i);
                 keyText[i].FillColor = Color.White;
                 keyText[i].OutlineThickness = 10.0f;
             }
 
             scrollText = new Text("Scroll Speed: " + scrollSpeed, new Font("Assets/Fonts/komika-display.regular.ttf"));
 
-            scrollText.Position = new Vector2f(200, 100 + 400);
+            scrollText.Position = new Vector2f(200, 75 + 400);
             scrollText.FillColor = Color.White;
             scrollText.OutlineThickness = 10.0f;
 
+            downText = new Text("Down Scroll: false", new Font("Assets/Fonts/komika-display.regular.ttf"));
+            downText.Position = new Vector2f(200, 75 + 500);
+            downText.FillColor = Color.White;
+            downText.OutlineThickness = 10.0f;
+            view = new View(new FloatRect(0, 0, 1280, 720));
+            view.Zoom(0.9f);
         }
 
         public override void Draw()
         {
+            wnd.SetView(view);
             foreach (var s in spriteContainer.Values)
                 wnd.Draw(s);
 
+            
             foreach (var s in keyText)
                 wnd.Draw(s);
             wnd.Draw(scrollText);
-
+            wnd.Draw(downText);
             wnd.Draw(transition);
+            wnd.SetView(wnd.DefaultView);
         }
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
@@ -727,6 +755,7 @@ namespace FunnyFriday
                     File.AppendAllText("Assets/Options.txt", ((int)s).ToString() + '\n');
 
                 File.AppendAllText("Assets/Options.txt", Math.Round(scrollSpeed, 2).ToString() + '\n');
+                File.AppendAllText("Assets/Options.txt", bDownScroll.ToString());
 
                 stack.ChangeStack(new SelectScreen(wnd));
             }
@@ -775,14 +804,18 @@ namespace FunnyFriday
             if(Keyboard.IsKeyPressed(Keyboard.Key.Enter))
                 bChange = true;
 
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Down) && nChoice < 4 && deltaTime.ElapsedTime.AsSeconds() >= 0.3)
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Down) && nChoice < 5 && deltaTime.ElapsedTime.AsSeconds() >= 0.3)
             {
+                lerpY += 2 * (nChoice + 1);
+                bLerp = true;
                 nChoice++;
                 deltaTime.Restart();
             }
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.Up) && nChoice > 0 && deltaTime.ElapsedTime.AsSeconds() >= 0.3)
             {
+                lerpY -= 2 * (nChoice + 1);
+                bLerp = true;
                 nChoice--;
                 deltaTime.Restart();
             }
@@ -799,6 +832,20 @@ namespace FunnyFriday
                 deltaTime.Restart();
             }
 
+            if(nChoice == 5 && Keyboard.IsKeyPressed(Keyboard.Key.Left) && deltaTime.ElapsedTime.AsSeconds() >= 0.3 && bDownScroll == true)
+            {
+                bDownScroll = false;
+                downText.DisplayedString = "Down Scroll: false";
+                deltaTime.Restart();
+            }
+
+            if (nChoice == 5 && Keyboard.IsKeyPressed(Keyboard.Key.Right) && deltaTime.ElapsedTime.AsSeconds() >= 0.3 && bDownScroll == false)
+            {
+                bDownScroll = true;
+                downText.DisplayedString = "Down Scroll: true";
+                deltaTime.Restart();
+            }
+
             if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
                 bExit = true;
 
@@ -809,6 +856,9 @@ namespace FunnyFriday
 
         public override void Update()
         {
+            if (bLerp)
+                LerpTo(new Vector2f(640, 360 + lerpY), ref bLerp);
+
             if (transition.FillColor.A >= 4 && !bTransition && !bExit)
                 transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A - 4));
 
@@ -825,6 +875,11 @@ namespace FunnyFriday
             }
             else
                 scrollText.Scale = new Vector2f(1.0f, 1.0f);
+
+            if(nChoice == 5)
+                downText.Scale = new Vector2f(1.5f, 1.5f);
+            else
+                downText.Scale = new Vector2f(1.0f, 1.0f);
 
             if (bExit == true)
             {
@@ -902,6 +957,8 @@ namespace FunnyFriday
                 wnd.Draw(s);
 
             wnd.Draw(transition);
+
+            wnd.SetView(wnd.DefaultView);
         }
 
         public void LerpTo(Vector2f pos, ref bool b)
