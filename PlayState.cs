@@ -299,12 +299,14 @@ namespace FunnyFriday
                                     break;
                                 case 1:
                                     chart = new ChartParser("Assets/Music/Zavodila/zavodila-hard");
+                                    bNext = true;
                                     break;
                                 case 2:
                                     chart = new ChartParser("Assets/Music/Zavodila/zavodila-alt");
+                                    bNext = true;
                                     break;
                             }
-                            bNext = true;
+                            
                             instrumental = new Sound(new SoundBuffer("Assets/Music/Zavodila/Inst.ogg"));
                             voice = new Sound(new SoundBuffer("Assets/Music/Zavodila/Voices.ogg"));
                             break;
@@ -312,9 +314,6 @@ namespace FunnyFriday
                         case 1:
                             switch (nDifficulty)
                             {
-                                case 0:
-                                    chart = new ChartParser("Assets/Music/Casanova/casanova-easy");
-                                    break;
                                 case 1:
                                     chart = new ChartParser("Assets/Music/Casanova/casanova-hard");
                                     break;
