@@ -13,7 +13,7 @@ namespace FunnyFriday
     {
         public abstract void Draw();
 
-        public abstract void Update(ref Clock deltaTime);
+        public abstract void Update();
 
         public abstract void InputHandling(StateMachine stack, ref Clock deltaTime);
     }
@@ -43,7 +43,7 @@ namespace FunnyFriday
                     menuMusic.Play();
         }
 
-        public override void Update(ref Clock deltaTime)
+        public override void Update()
         {
 
         }
@@ -82,7 +82,7 @@ namespace FunnyFriday
             introTime = new Clock();
         }
 
-        public override void Update(ref Clock deltaTime)
+        public override void Update()
         {
             if (introTime.ElapsedTime.AsSeconds() >= 0.7f && introTime.ElapsedTime.AsSeconds() <= 2.0f)
             {
@@ -151,6 +151,7 @@ namespace FunnyFriday
         RectangleShape transition;
         RectangleShape flash;
         int gameTick = 0;
+        Clock cClock;
         Sound sound1;
 
 
@@ -183,6 +184,7 @@ namespace FunnyFriday
             flash = new RectangleShape(new Vector2f(1280, 720));
             flash.FillColor = new Color(255, 255, 255, 255);
 
+            cClock = new Clock();
             sound1 = new Sound(new SoundBuffer("Assets/Sounds/confirmMenu.ogg"));
         }
 
@@ -194,13 +196,13 @@ namespace FunnyFriday
             wnd.Draw(transition);
         }
 
-        public override void Update(ref Clock deltaTime)
+        public override void Update()
         {
             if (flash.FillColor.A > 0)
                 flash.FillColor = new Color(255, 255, 255, (byte)(flash.FillColor.A - 1));
 
 
-            if (deltaTime.ElapsedTime.AsSeconds() >= 0.037f)
+            if (cClock.ElapsedTime.AsSeconds() >= 0.037f)
             {
 
                 int index = gameTick % logoTexture.Count;
@@ -218,7 +220,7 @@ namespace FunnyFriday
                 
 
                 gameTick++;
-                deltaTime.Restart();
+                cClock.Restart();
             }
 
             if (bTransition == true)
@@ -239,7 +241,7 @@ namespace FunnyFriday
                 }
 
                 gameTick++;
-                deltaTime.Restart();
+                cClock.Restart();
             }
         }
 
@@ -275,6 +277,8 @@ namespace FunnyFriday
 
         int selectedMenu = 0;
 
+        Clock cClock;
+
         Sound sound1;
         Sound scroll;
 
@@ -307,14 +311,15 @@ namespace FunnyFriday
 
             sound1 = new Sound(new SoundBuffer("Assets/Sounds/confirmMenu.ogg"));
             scroll = new Sound(new SoundBuffer("Assets/Sounds/scrollMenu.ogg"));
+            cClock = new Clock();
         }
 
-        public override void Update(ref Clock deltaTime)
+        public override void Update()
         {
             if (transition.FillColor.A >= 4 && bTransition == false && sound1.Status == 0)
                 transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A - 4));
 
-            if (selectedMenu == 0 && deltaTime.ElapsedTime.AsSeconds() >= 0.04f)
+            if (selectedMenu == 0 && cClock.ElapsedTime.AsSeconds() >= 0.04f)
             {
                 int index = gameTick % storyWhite.Count;
 
@@ -333,10 +338,10 @@ namespace FunnyFriday
 
 
                 gameTick++;
-                deltaTime.Restart();
+                cClock.Restart();
             }
 
-            if (selectedMenu == 1 && deltaTime.ElapsedTime.AsSeconds() >= 0.04f)
+            if (selectedMenu == 1 && cClock.ElapsedTime.AsSeconds() >= 0.04f)
             {
                 int index = gameTick % storySelected.Count;
 
@@ -355,7 +360,7 @@ namespace FunnyFriday
 
 
                 gameTick++;
-                deltaTime.Restart();
+                cClock.Restart();
             }
 
             if (bTransition == true)
@@ -371,7 +376,7 @@ namespace FunnyFriday
                 }
 
                 gameTick++;
-                deltaTime.Restart();
+                cClock.Restart();
             }
         }
 
@@ -524,7 +529,7 @@ namespace FunnyFriday
             wnd.Draw(transition);
         }
 
-        public override void Update(ref Clock deltaTime)
+        public override void Update()
         {
             if (transition.FillColor.A >= 4 && !bTransition && !bExit)
                 transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A - 4));
@@ -802,7 +807,7 @@ namespace FunnyFriday
                 stack.ChangeStack(new SelectScreen(wnd));
         }
 
-        public override void Update(ref Clock deltaTime)
+        public override void Update()
         {
             if (transition.FillColor.A >= 4 && !bTransition && !bExit)
                 transition.FillColor = new Color(0, 0, 0, (byte)(transition.FillColor.A - 4));
@@ -863,6 +868,8 @@ namespace FunnyFriday
         bool bExit = false;
         bool bFinishedExit = false;
 
+        Clock cClock;
+
 
         public GameOver(RenderWindow _wnd, int week, int difficulty, int song)
         {
@@ -884,6 +891,7 @@ namespace FunnyFriday
             transition.FillColor = new Color(0, 0, 0, 0);
 
             view = new View(new FloatRect(0, 0, 1280, 720));
+            cClock = new Clock();
         }
 
         public override void Draw()
@@ -923,12 +931,12 @@ namespace FunnyFriday
                 stack.ChangeStack(new PlayState(wnd, nWeek, nSong, nDifficulty));
         }
 
-        public override void Update(ref Clock deltaTime)
+        public override void Update()
         {
             if (bLerp)
                 LerpTo(new Vector2f(1000, 500), ref bLerp);
 
-            if (deltaTime.ElapsedTime.AsSeconds() >= 0.04f && !bTransition)
+            if (cClock.ElapsedTime.AsSeconds() >= 0.04f && !bTransition)
             {
                 int index = gameTick % deathLoop.Count;
 
@@ -936,10 +944,10 @@ namespace FunnyFriday
                 spriteContainer["playerDead"].TextureRect = new IntRect(0, 0, (int)deathLoop[index].Size.X, (int)deathLoop[index].Size.X);
 
                 gameTick++;
-                deltaTime.Restart();
+                cClock.Restart();
             }
 
-            if(bTransition && deltaTime.ElapsedTime.AsSeconds() >= 0.04f)
+            if(bTransition && cClock.ElapsedTime.AsSeconds() >= 0.04f)
             {
                 if(gameTick <= deathConfirm.Count - 1)
                 {
@@ -952,7 +960,7 @@ namespace FunnyFriday
                 }
 
                 gameTick++;
-                deltaTime.Restart();
+                cClock.Restart();
             }
 
             if (bExit == true)

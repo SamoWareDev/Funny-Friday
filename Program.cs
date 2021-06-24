@@ -29,7 +29,6 @@ namespace FunnyFriday
             wnd.Closed += WindowClosed;
 
             var stateMachine = new StateMachine();
-            stateMachine.AddStack(new MusicManager());
             stateMachine.AddStack(new Intro(wnd));
 
             while (wnd.IsOpen)
@@ -37,18 +36,21 @@ namespace FunnyFriday
                 wnd.DispatchEvents();
                 wnd.Clear(Color.Black);
 
-                
+
                 try
                 {
                     foreach (var s in stateMachine.stateStack)
                     {
                         s.InputHandling(stateMachine, ref deltaTime);
                         s.Draw();
-                        s.Update(ref deltaTime);
+                        s.Update();
                     }
                 }
                 catch { }
-                
+
+                //stateMachine.GetActiveStack().InputHandling(stateMachine, ref deltaTime);
+                //stateMachine.GetActiveStack().Draw();
+                //stateMachine.GetActiveStack().Update();
 
                 wnd.Display();
             }

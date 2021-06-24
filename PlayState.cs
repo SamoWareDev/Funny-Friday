@@ -82,7 +82,7 @@ namespace FunnyFriday
         int nHP = 50;
         Text hpText;
 
-        float delta = 0.0f;
+        Time delta = new Time();
 
         View view;
 
@@ -286,10 +286,45 @@ namespace FunnyFriday
                     break;
 
                 case 1:
-                    chart = new ChartParser("Assets/Music/Zavodila/zavodila-alt");
+                    switch(nDay)
+                    {
+                        case 0:
+                            switch(nDifficulty)
+                            {
+                                case 0:
+                                    chart = new ChartParser("Assets/Music/Zavodila/zavodila");
+                                    break;
+                                case 1:
+                                    chart = new ChartParser("Assets/Music/Zavodila/zavodila-hard");
+                                    break;
+                                case 2:
+                                    chart = new ChartParser("Assets/Music/Zavodila/zavodila-alt");
+                                    break;
+                            }
+                            bNext = true;
+                            instrumental = new Sound(new SoundBuffer("Assets/Music/Zavodila/Inst.ogg"));
+                            voice = new Sound(new SoundBuffer("Assets/Music/Zavodila/Voices.ogg"));
+                            break;
 
-                    instrumental = new Sound(new SoundBuffer("Assets/Music/Zavodila/Inst.ogg"));
-                    voice = new Sound(new SoundBuffer("Assets/Music/Zavodila/Voices.ogg"));
+                        case 1:
+                            switch (nDifficulty)
+                            {
+                                case 0:
+                                    chart = new ChartParser("Assets/Music/Casanova/casanova-easy");
+                                    break;
+                                case 1:
+                                    chart = new ChartParser("Assets/Music/Casanova/casanova-hard");
+                                    break;
+                                case 2:
+                                    chart = new ChartParser("Assets/Music/Casanova/casanova-alt");
+                                    break;
+                            }
+
+                            instrumental = new Sound(new SoundBuffer("Assets/Music/Casanova/Inst.ogg"));
+                            voice = new Sound(new SoundBuffer("Assets/Music/Casanova/Voices.ogg"));
+                            break;
+
+                    }
 
                     textureManager = new TextureManager("Assets/XML/egger.xml");
 
@@ -368,13 +403,13 @@ namespace FunnyFriday
                             if (lane <= 3)
                             {
                                 lanes[lane + 4].Add(new Sprite(noteArray[lane]));
-                                lanes[lane + 4][lanes[lane + 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 4 * i) * scrollSpeed);
+                                lanes[lane + 4][lanes[lane + 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed);
                                 lanes[lane + 4][lanes[lane + 4].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                             if (lane >= 4)
                             {
                                 lanes[lane - 4].Add(new Sprite(noteArray[lane - 4]));
-                                lanes[lane - 4][lanes[lane - 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 4 * i) * scrollSpeed);
+                                lanes[lane - 4][lanes[lane - 4].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed);
                                 lanes[lane - 4][lanes[lane - 4].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                         }
@@ -383,13 +418,13 @@ namespace FunnyFriday
                             if (lane <= 3)
                             {
                                 lanes[lane].Add(new Sprite(noteArray[lane]));
-                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 4 * i) * scrollSpeed);
+                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed);
                                 lanes[lane][lanes[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                             if(lane >= 4)
                             {
                                 lanes[lane].Add(new Sprite(noteArray[lane - 4]));
-                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 4 * i) * scrollSpeed);
+                                lanes[lane][lanes[lane].Count - 1].Position = new Vector2f(0, (float)(yPos - 0 * i) * scrollSpeed);
                                 lanes[lane][lanes[lane].Count - 1].Scale = new Vector2f(0.7f, 0.7f);
                             }
                         } 
@@ -462,16 +497,14 @@ namespace FunnyFriday
                 b = false;
         }
 
-        public override void Update(ref Clock deltaTime)
+        public override void Update()
         {
-            delta = musicTime.ElapsedTime.AsSeconds() * 1000.0f * scrollSpeed;
-
             try
             {
                 for (int i = 0; i < playerLane.Count; i++)
                     for (int j = 0; j < playerLane[i].Count; j++)
                     {
-                        playerLane[i][j].Position = new Vector2f(playerLane[i][j].Position.X, playerLane[i][j].Position.Y - delta);
+                        playerLane[i][j].Position = new Vector2f(playerLane[i][j].Position.X, playerLane[i][j].Position.Y - delta.AsSeconds() * 1000.0f * scrollSpeed);
 
                         if (playerLane[i][j].Position.Y <= arrowContainer[i].Position.Y - 175.0f)
                         {
@@ -497,7 +530,7 @@ namespace FunnyFriday
                             enemyLane[i].Remove(enemyLane[i][j]);
                         }
 
-                        enemyLane[i][j].Position = new Vector2f(enemyLane[i][j].Position.X, enemyLane[i][j].Position.Y - delta);
+                        enemyLane[i][j].Position = new Vector2f(enemyLane[i][j].Position.X, enemyLane[i][j].Position.Y - delta.AsSeconds() * 1000.0f * scrollSpeed);
                     }
             }
             catch { }
@@ -632,7 +665,7 @@ namespace FunnyFriday
                         bFocusEnemy = true;
             }
 
-            musicTime.Restart();
+            delta = musicTime.Restart();
         }
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
@@ -721,10 +754,10 @@ namespace FunnyFriday
 
             catch { }
 
-                if (instrumental.Status == 0 && bNext)
+                if (instrumental.Status == 0 && bNext && nHP > 0)
                     stack.ChangeStack(new PlayState(wnd, nWeek, nDay + 1, nDifficulty));
 
-                if (instrumental.Status == 0 && bNext == false && nDay >= 0)
+                if (instrumental.Status == 0 && bNext == false && nDay >= 0 && nHP > 0)
                     stack.ChangeStack(new SelectScreen(wnd));
             }
     }

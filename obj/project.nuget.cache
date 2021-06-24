@@ -1,15 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "gL+v5S3zNtTaMZ399kkm8R2Hc3slF6KOkmASbfahhH/N1YlZ8rR/ypXdWNWcm1Fqg+bBw4iNFMb3GVNllDCoHQ==",
+  "dgSpecHash": "W6+MU+7+s9+cOglMvGfJr6nJAMueSCPvUtyMLk+bRhONnMyXp1emqsfVb5fcHJEmU+ZmOFRqjqJXHmlo/Rn3Pw==",
   "success": true,
-  "projectFilePath": "C:\\Users\\PC\\Desktop\\Progaming\\GitHub\\Funny-Friday\\FunnyFriday.csproj",
+  "projectFilePath": "C:\\Users\\playf\\Desktop\\Programming\\C#\\GitHub\\Funny-Friday\\FunnyFriday.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\PC\\.nuget\\packages\\csfml\\2.5.0\\csfml.2.5.0.nupkg.sha512",
-    "C:\\Users\\PC\\.nuget\\packages\\sfml.audio\\2.5.0\\sfml.audio.2.5.0.nupkg.sha512",
-    "C:\\Users\\PC\\.nuget\\packages\\sfml.graphics\\2.5.0\\sfml.graphics.2.5.0.nupkg.sha512",
-    "C:\\Users\\PC\\.nuget\\packages\\sfml.net\\2.5.0\\sfml.net.2.5.0.nupkg.sha512",
-    "C:\\Users\\PC\\.nuget\\packages\\sfml.system\\2.5.0\\sfml.system.2.5.0.nupkg.sha512",
-    "C:\\Users\\PC\\.nuget\\packages\\sfml.window\\2.5.0\\sfml.window.2.5.0.nupkg.sha512"
+    "C:\\Users\\playf\\.nuget\\packages\\csfml\\2.5.0\\csfml.2.5.0.nupkg.sha512",
+    "C:\\Users\\playf\\.nuget\\packages\\sfml.audio\\2.5.0\\sfml.audio.2.5.0.nupkg.sha512",
+    "C:\\Users\\playf\\.nuget\\packages\\sfml.graphics\\2.5.0\\sfml.graphics.2.5.0.nupkg.sha512",
+    "C:\\Users\\playf\\.nuget\\packages\\sfml.net\\2.5.0\\sfml.net.2.5.0.nupkg.sha512",
+    "C:\\Users\\playf\\.nuget\\packages\\sfml.system\\2.5.0\\sfml.system.2.5.0.nupkg.sha512",
+    "C:\\Users\\playf\\.nuget\\packages\\sfml.window\\2.5.0\\sfml.window.2.5.0.nupkg.sha512"
   ],
   "logs": []
 }
