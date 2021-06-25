@@ -1,7 +1,0 @@
-﻿namespace FunnyFriday
-{
-    class SoundManager
-    {
-        
-    }
-}
