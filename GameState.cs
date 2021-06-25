@@ -35,7 +35,7 @@ namespace FunnyFriday
 
         public override void InputHandling(StateMachine stack, ref Clock deltaTime)
         {
-            //MOST BOOTLEG METHOD LMAOOO
+            //MOST BOOTLEG SOLUTION LMAOOO
             if (stack.GetActiveStack().GetType() == typeof(PlayState) || stack.GetActiveStack().GetType() == typeof(GameOver))
                 menuMusic.Stop();
             else
@@ -91,7 +91,7 @@ namespace FunnyFriday
                     720 / 2 - regularText.GetLocalBounds().Height / 2 - 100);
             }
 
-            if (introTime.ElapsedTime.AsSeconds() >= 2.0f && introTime.ElapsedTime.AsSeconds() <= 3.0f)
+            if (introTime.ElapsedTime.AsSeconds() >= 1.5f && introTime.ElapsedTime.AsSeconds() <= 3.0f)
             {
                 secondText.DisplayedString = "LOL";
                 secondText.Position = new Vector2f(1280 / 2 - secondText.GetLocalBounds().Width / 2,
@@ -106,14 +106,14 @@ namespace FunnyFriday
 
             if (introTime.ElapsedTime.AsSeconds() >= 4.1f && introTime.ElapsedTime.AsSeconds() <= 5.4f)
             {
-                regularText.DisplayedString = "FUCK YOU EGGER";
+                regularText.DisplayedString = "THANK YOU LUKA";
                 regularText.Position = new Vector2f(1280 / 2 - regularText.GetLocalBounds().Width / 2,
                     720 / 2 - regularText.GetLocalBounds().Height / 2 - 100);
             }
 
             if(introTime.ElapsedTime.AsSeconds() >= 5.4f && introTime.ElapsedTime.AsSeconds() <= 6.5f)
             {
-                secondText.DisplayedString = "GET IT IS TRASH";
+                secondText.DisplayedString = "FOR MAKING ONE SPRITESHEET";
                 secondText.Position = new Vector2f(1280 / 2 - secondText.GetLocalBounds().Width / 2,
                     720 / 2 - secondText.GetLocalBounds().Height / 2 - 50);
             }
